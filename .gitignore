@@ -224,6 +224,7 @@ models/
 
 # Vendored/built llama.cpp
 .llama.cpp/
+.stable-diffusion.cpp/
 
 # Per-target local config overrides (checked-in *.env.example are templates)
 targets/*/*.env

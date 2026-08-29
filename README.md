@@ -60,15 +60,29 @@ Override inline: `MMH3_PORT=9000 bash serve.sh`
 | Disk | ~2-3 GB | Q2_K GGUF file + llama.cpp build |
 | VRAM | 8 GB (RTX 4070) | Sized for this GPU; not all layers may fit on GPU at this quant/context — remaining layers fall back to CPU RAM automatically |
 
-### Install as systemd service (recommended)
+### Install as systemd service
 
 ```bash
 sudo bash install.sh
 ```
 
+This repo supports both install scopes:
+
+- `bash install.sh` — install as the current user's `systemd --user` service
+- `sudo bash install.sh` — install system-wide
+
+For a non-root install, the service follows the user's systemd session by
+default. If you want it to survive logout or start on reboot without an active
+login session:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
 Options:
 
 ```bash
+bash install.sh --user-install
 sudo bash install.sh --port 9000
 sudo bash install.sh --model /path/to/minimax_h3_fl2va_pruned-Q2_K.gguf
 sudo bash install.sh --skip-download   # model already on disk
@@ -89,6 +103,15 @@ systemctl status video-streaming-minimax-h3-dev-rtx4070      # check status
 journalctl -u video-streaming-minimax-h3-dev-rtx4070 -f      # follow logs
 sudo bash restart.sh                                          # restart
 sudo bash uninstall.sh                                         # remove service
+```
+
+For a non-root install:
+
+```bash
+systemctl --user status video-streaming-minimax-h3-dev-rtx4070
+journalctl --user -u video-streaming-minimax-h3-dev-rtx4070 -f
+bash restart.sh --user-install
+bash uninstall.sh --user-install
 ```
 
 ### Manual run
@@ -117,6 +140,28 @@ bash clean-logs.sh
 # Pre-flight check only (don't start)
 MMH3_CHECK_ONLY=1 bash serve.sh
 ```
+
+### Render a simple 30-second MiniMax-H3 test clip
+
+The OpenAI-style `llama.cpp` server path above is not suitable for MiniMax-H3
+video generation. For a simple local render test on the RTX 4070 target, use
+[`render-test.sh`](/home/michel/code/video-streaming-minimax-h3/render-test.sh),
+which follows the published `stable-diffusion.cpp` MiniMax-H3 workflow and
+stitches two short segments into one 30-second WebM clip.
+
+```bash
+bash render-test.sh
+```
+
+What it does:
+
+- builds `stable-diffusion.cpp` with CUDA + WebM support
+- downloads the supported MiniMax-H3 diffusion model, text encoder, video VAE,
+  and audio VAE
+- renders two 15-second segments at 320x192 / 24 fps / 4 steps
+- concatenates them into one 30-second clip with `ffmpeg`
+
+Outputs land under `~/videos/minimax-h3/<timestamp>/`.
 
 ## API
 
