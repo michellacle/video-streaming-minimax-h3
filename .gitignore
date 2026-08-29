@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- video-streaming-minimax-h3 project-specific ---------------------
+# Downloaded model weights / GGUF artifacts
+models/
+*.gguf
+
+# Vendored/built llama.cpp
+.llama.cpp/
+
+# Per-target local config overrides (checked-in *.env.example are templates)
+targets/*/*.env
+
+# Logs, pid files, benchmark output
+*.log
+*.pid
