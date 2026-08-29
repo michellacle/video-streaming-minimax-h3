@@ -1,0 +1,21 @@
+[Unit]
+Description=MiniMax-H3 Video Streaming Server -- dev/test (1x RTX 4070)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=michel
+Group=michel
+WorkingDirectory=/home/michel/code/video-streaming-minimax-h3
+EnvironmentFile=/etc/video-streaming-minimax-h3-dev-rtx4070.env
+ExecStart=/home/michel/code/video-streaming-minimax-h3/daemon.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+LogsDirectory=video-streaming-minimax-h3-dev-rtx4070
+PIDFile=/run/video-streaming-minimax-h3-dev-rtx4070.pid
+
+[Install]
+WantedBy=multi-user.target
