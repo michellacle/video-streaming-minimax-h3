@@ -137,6 +137,18 @@ TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="${MMH3_RENDER_OUTPUT_DIR}/${TIMESTAMP}"
 FINAL_OUTPUT="${RUN_DIR}/neo-vs-morpheus-stick-figure-${MMH3_RENDER_TOTAL_SECONDS}s.webm"
 CONCAT_LIST="${RUN_DIR}/concat.txt"
+METRICS_FILE="${RUN_DIR}/metrics.tsv"
+
+now_ms() {
+  date +%s%3N
+}
+
+record_metric() {
+  local phase="$1"
+  local subject="$2"
+  local elapsed_ms="$3"
+  printf '%s\t%s\t%s\n' "$phase" "$subject" "$elapsed_ms" >> "$METRICS_FILE"
+}
 
 echo "=== MiniMax-H3 Render Test (${TARGET}) ==="
 echo "Diffusion model: ${DIFFUSION_MODEL_PATH}"
@@ -191,15 +203,22 @@ if ! "${VENV_DIR}/bin/python3" -c "import huggingface_hub" >/dev/null 2>&1; then
 fi
 
 mkdir -p "$MMH3_RENDER_ASSET_DIR" "$RUN_DIR"
+printf 'phase\tsubject\telapsed_ms\n' > "$METRICS_FILE"
 
+assets_start_ms=$(now_ms)
 ensure_downloaded_file "$MMH3_RENDER_HF_REPO" "$MMH3_RENDER_DIFFUSION_FILE" "$DIFFUSION_MODEL_PATH"
 ensure_downloaded_file "$MMH3_RENDER_HF_REPO" "$MMH3_RENDER_TEXT_ENCODER_FILE" "$TEXT_ENCODER_PATH"
 ensure_downloaded_file "$MMH3_RENDER_AUX_REPO" "$MMH3_RENDER_VIDEO_VAE_FILE" "$VIDEO_VAE_PATH"
 ensure_downloaded_file "$MMH3_RENDER_AUX_REPO" "$MMH3_RENDER_AUDIO_VAE_FILE" "$AUDIO_VAE_PATH"
+record_metric "asset-availability" "all-assets" "$(( $(now_ms) - assets_start_ms ))"
 
 render_segment() {
   local segment_index="$1"
   local output_path="$2"
+  local segment_log="${RUN_DIR}/segment-${segment_index}.log"
+  local start_ms
+  local conditioning_seconds
+  local generation_seconds
   local backend_args=()
   local memory_args=()
 
@@ -212,6 +231,7 @@ render_segment() {
   echo ""
   echo "=== Rendering segment ${segment_index}/${MMH3_RENDER_SEGMENTS} ==="
 
+  start_ms=$(now_ms)
   "$SD_CLI_BIN" \
     -M vid_gen \
     --diffusion-model "$DIFFUSION_MODEL_PATH" \
@@ -231,7 +251,18 @@ render_segment() {
     "${memory_args[@]}" \
     --rng cpu \
     --output "$output_path" \
-    -v
+    -v 2>&1 | tee "$segment_log"
+  record_metric "sd-cli-wall" "segment-${segment_index}" "$(( $(now_ms) - start_ms ))"
+
+  conditioning_seconds=$(sed -n 's/.*get_learned_condition completed, taking \([0-9.]*\)s.*/\1/p' "$segment_log" | tail -1)
+  if [ -n "$conditioning_seconds" ]; then
+    record_metric "conditioning" "segment-${segment_index}" "$(awk -v seconds="$conditioning_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')"
+  fi
+
+  generation_seconds=$(sed -n 's/.*generate_video completed in \([0-9.]*\)s.*/\1/p' "$segment_log" | tail -1)
+  if [ -n "$generation_seconds" ]; then
+    record_metric "generate-video" "segment-${segment_index}" "$(awk -v seconds="$generation_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')"
+  fi
 }
 
 segment_paths=()
@@ -245,7 +276,9 @@ printf "file '%s'\n" "${segment_paths[@]}" > "$CONCAT_LIST"
 
 # sd-cli can produce PCM audio in each WebM segment, but WebM only supports
 # Vorbis or Opus audio. Preserve the generated VP8 video and transcode audio.
+concat_start_ms=$(now_ms)
 ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy -c:a libopus -b:a 128k "$FINAL_OUTPUT"
+record_metric "webm-mux" "final-output" "$(( $(now_ms) - concat_start_ms ))"
 
 echo ""
 echo "Done."
@@ -253,3 +286,4 @@ for ((segment_index = 0; segment_index < ${#segment_paths[@]}; segment_index++))
   echo "Segment $((segment_index + 1)):  ${segment_paths[$segment_index]}"
 done
 echo "Final clip: $FINAL_OUTPUT"
+echo "Metrics:    $METRICS_FILE"

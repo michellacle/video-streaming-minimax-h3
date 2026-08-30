@@ -264,6 +264,40 @@ stick-figure request becomes two detailed adult martial artists in a furnished
 digital dojo with consoles, pillars, cables, chairs, paper, and sparks. This
 isolates prompt/detail conditioning from resolution and sampler changes.
 
+### Pipeline and throughput measurements
+
+Each new render writes `<run>/metrics.tsv`, a tab-separated phase log in
+milliseconds. It records asset availability (download time on cold runs, cache
+check time on warm runs), `sd-cli` wall time, text conditioning,
+`generate_video`, and final WebM muxing. The two internal `sd-cli` timings are
+parsed from its own log; the full `sd-cli` wall time includes model staging,
+conditioning, generation, decoding, and writing. This is the measurement
+baseline for future optimization work.
+
+```mermaid
+flowchart LR
+    A[Prompt + fixed seed<br/>Bash test entrypoint] --> B[Asset availability<br/>Hugging Face cache]
+    B --> C[Text conditioning<br/>Qwen3-VL on CPU/RAM + CUDA staging]
+    C --> D[AV latent sampling<br/>MiniMax-H3 Q8 + CUDA flash attention]
+    D --> E[Video/audio decode<br/>MiniMax VAEs]
+    E --> F[WebM mux<br/>VP8 copy + Opus encode]
+    F --> G[WebM + metrics.tsv<br/>shareable sample]
+```
+
+| Test case | Model / conditions | Output | Conditioning | `generate_video` | Generation throughput | Measurement status |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| FL2VA Q4, runs 1–2 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Historical samples only |
+| Ref2VA Q6 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Historical sample only |
+| FL2VA Q8 smoke | 320x192, 4 steps, two 362-frame segments | 30.132 s | 8.34–8.43 s/segment | 94.29–94.39 s/segment | 6.26 s render / s video | Backfilled from log |
+| FL2VA Q8 quality | 864x480, 20 steps, 124 frames, seed 42 | 5.174 s | 8.36 s | 691.59 s | 133.67 s render / s video | Backfilled from log |
+| FL2VA Q8 quality rung | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.35 s | 1,082.86 s | 209.29 s render / s video | Backfilled from log |
+| FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | Pending | Pending | Pending | Pending | Active render; metrics TSV will be created |
+
+The figures above measure the reported `generate_video` phase only, not model
+download time or full process wall time. Keep resolution, step count, seed,
+prompt, model quantization, and GPU-placement conditions in every new row so
+future comparisons change one factor at a time.
+
 ## Rendered samples
 
 These test outputs were rendered on the 4 x RTX 3090 host:
