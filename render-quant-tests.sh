@@ -19,6 +19,7 @@ Usage:
 Available quant tests:
   fl2va-pruned-q4  MiniMax-H3 first/last-frame pruned Q4_K_M (verified)
   ref2va-pruned-q6 MiniMax-H3 reference-to-video pruned Q6_K
+  fl2va-q8         MiniMax-H3 full FL2VA Q8_0 from Abiray
 EOF
 }
 
@@ -62,16 +63,28 @@ run_quant() {
   local quant="$1"
   local diffusion_file
   local text_encoder_file
+  local render_repo
+  local auxiliary_repo
   local render_args=()
 
   case "$quant" in
     fl2va-pruned-q4)
       diffusion_file="minimax_h3_fl2va_pruned-Q4_K_M.gguf"
       text_encoder_file="qwen3vl_32b_minimax_h3-Q2_K_M.gguf"
+      render_repo="leejet/MiniMax-H3-GGUF"
+      auxiliary_repo="Comfy-Org/MiniMax-H3"
       ;;
     ref2va-pruned-q6)
       diffusion_file="minimax_h3_ref2va_pruned-Q6_K.gguf"
       text_encoder_file="qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
+      render_repo="leejet/MiniMax-H3-GGUF"
+      auxiliary_repo="Comfy-Org/MiniMax-H3"
+      ;;
+    fl2va-q8)
+      diffusion_file="unet/MiniMax-H3-FL2VA-Q8_0.gguf"
+      text_encoder_file="text_encoders/qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
+      render_repo="Abiray/MiniMax-H3-GGUF"
+      auxiliary_repo="Abiray/MiniMax-H3-GGUF"
       ;;
     *)
       echo "ERROR: Unknown quant test '${quant}'." >&2
@@ -87,7 +100,8 @@ run_quant() {
   echo "=== Running quant test: ${quant} ==="
   MMH3_RENDER_OUTPUT_DIR="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3}/${quant}" \
     bash "${SCRIPT_DIR}/render-test.sh" \
-      --render-hf-repo "leejet/MiniMax-H3-GGUF" \
+      --render-hf-repo "$render_repo" \
+      --render-aux-hf-repo "$auxiliary_repo" \
       --diffusion-file "$diffusion_file" \
       --text-encoder-file "$text_encoder_file" \
       "${render_args[@]}"

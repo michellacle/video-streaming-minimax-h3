@@ -19,6 +19,7 @@ CHECK_ONLY=0
 CUSTOM_DIFFUSION_FILE=""
 CUSTOM_TEXT_ENCODER_FILE=""
 CUSTOM_RENDER_HF_REPO=""
+CUSTOM_RENDER_AUX_HF_REPO=""
 CUSTOM_BACKEND=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -38,6 +39,11 @@ while [[ $# -gt 0 ]]; do
       [ -n "$CUSTOM_RENDER_HF_REPO" ] || { echo "ERROR: --render-hf-repo requires a repository." >&2; exit 1; }
       shift 2
       ;;
+    --render-aux-hf-repo)
+      CUSTOM_RENDER_AUX_HF_REPO="${2:-}"
+      [ -n "$CUSTOM_RENDER_AUX_HF_REPO" ] || { echo "ERROR: --render-aux-hf-repo requires a repository." >&2; exit 1; }
+      shift 2
+      ;;
     --backend)
       CUSTOM_BACKEND="${2:-}"
       [ -n "$CUSTOM_BACKEND" ] || { echo "ERROR: --backend requires an assignment." >&2; exit 1; }
@@ -55,6 +61,7 @@ MMH3_RENDER_HF_REPO="${CUSTOM_RENDER_HF_REPO:-${MMH3_RENDER_HF_REPO:-leejet/Mini
 MMH3_RENDER_DIFFUSION_FILE="${CUSTOM_DIFFUSION_FILE:-${MMH3_RENDER_DIFFUSION_FILE:-minimax_h3_fl2va_pruned-Q4_K_M.gguf}}"
 MMH3_RENDER_TEXT_ENCODER_FILE="${CUSTOM_TEXT_ENCODER_FILE:-${MMH3_RENDER_TEXT_ENCODER_FILE:-qwen3vl_32b_minimax_h3-Q2_K_M.gguf}}"
 MMH3_RENDER_BACKEND="${CUSTOM_BACKEND:-${MMH3_RENDER_BACKEND:-}}"
+MMH3_RENDER_AUX_REPO="${CUSTOM_RENDER_AUX_HF_REPO:-${MMH3_RENDER_AUX_REPO:-Comfy-Org/MiniMax-H3}}"
 MMH3_RENDER_AUX_REPO="${MMH3_RENDER_AUX_REPO:-Comfy-Org/MiniMax-H3}"
 MMH3_RENDER_VIDEO_VAE_FILE="${MMH3_RENDER_VIDEO_VAE_FILE:-vae/minimax_h3_video_vae_fp16.safetensors}"
 MMH3_RENDER_AUDIO_VAE_FILE="${MMH3_RENDER_AUDIO_VAE_FILE:-vae/minimax_h3_audio_vae_fp32.safetensors}"
