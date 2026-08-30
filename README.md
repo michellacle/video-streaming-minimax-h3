@@ -250,7 +250,9 @@ The next test rung is
 It changes only the canvas from 864x480 to 1024x576, retains 20 steps and the
 five-second deterministic scene, and writes results under
 `~/videos/minimax-h3/fl2va-q8-1024x576/`. It reuses the isolated Q8 model
-cache, so no additional model-weight download is required.
+cache, so no additional model-weight download is required. On `gpus`, the
+5.17-second 1024x576 scene completed in 1,082.86 seconds (18 minutes 03
+seconds).
 
 ## Rendered samples
 
@@ -261,6 +263,7 @@ These test outputs were rendered on the 4 x RTX 3090 host:
 - [Ref2VA pruned Q6](samples/ref2va-pruned-q6-20260830-135402.webm)
 - [FL2VA pruned Q8](samples/fl2va-pruned-q8-20260830-144350.webm)
 - [FL2VA pruned Q8 quality development scene (864x480, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-864x480-20step-20260830-151400.webm)
+- [FL2VA pruned Q8 quality rung (1024x576, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-1024x576-20step-20260830-154804.webm)
 
 ## API
 
