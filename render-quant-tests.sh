@@ -87,6 +87,7 @@ run_quant() {
   echo "=== Running quant test: ${quant} ==="
   MMH3_RENDER_OUTPUT_DIR="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3}/${quant}" \
     bash "${SCRIPT_DIR}/render-test.sh" \
+      --render-hf-repo "leejet/MiniMax-H3-GGUF" \
       --diffusion-file "$diffusion_file" \
       --text-encoder-file "$text_encoder_file" \
       "${render_args[@]}"
