@@ -191,7 +191,7 @@ bash create-stick-fighter-video-q4.sh
 # The reference-to-video Q6 configuration
 bash create-stick-fighter-video-q6.sh
 
-# The compatible FL2VA pruned Q8 configuration from Abiray
+# Check whether Q8 MiniMax-H3 GGUF rendering is supported
 bash create-stick-fighter-video-q8.sh
 
 # Run the two verified configurations sequentially
@@ -207,13 +207,10 @@ memory access with MiniMax-H3 Q6, so it is intentionally not enabled. Results
 are organized below `~/videos/minimax-h3/<quant-name>/`; model weights remain
 under `~/models/minimax-h3-render/` and are ignored by Git.
 
-The Q8 test uses the 21.6 GB compatible
-`MiniMax-H3-FL2VA-Pruned-Q8_0.gguf` denoiser from
-[Abiray/MiniMax-H3-Pruned-GGUF](https://huggingface.co/Abiray/MiniMax-H3-Pruned-GGUF),
-with the 14.6 GB Q4 text encoder and video/audio VAEs from
-[Abiray/MiniMax-H3-GGUF](https://huggingface.co/Abiray/MiniMax-H3-GGUF).
-The similarly named 36 GB unpruned Q8 denoiser is incompatible with the
-`stable-diffusion.cpp` MiniMax-H3 implementation. See
+Q8 rendering is not presently available: both the 36 GB full Q8 and 21.6 GB
+pruned Q8 artifacts published by Abiray fail `stable-diffusion.cpp` model
+metadata validation. The named Q8 entrypoint reports this immediately, without
+downloading model weights. Use Q4 or Q6 for a working render. See
 [the Q8 compatibility note](docs/research/abiray-minimax-h3-q8.md).
 
 ## Rendered samples

@@ -19,7 +19,7 @@ Usage:
 Available quant tests:
   fl2va-pruned-q4  MiniMax-H3 first/last-frame pruned Q4_K_M (verified)
   ref2va-pruned-q6 MiniMax-H3 reference-to-video pruned Q6_K
-  fl2va-q8         MiniMax-H3 FL2VA pruned Q8_0 from Abiray
+  fl2va-q8         Reserved: no stable-diffusion.cpp-compatible Q8 GGUF is published
 EOF
 }
 
@@ -81,10 +81,13 @@ run_quant() {
       auxiliary_repo="Comfy-Org/MiniMax-H3"
       ;;
     fl2va-q8)
-      diffusion_file="MiniMax-H3-FL2VA-Pruned-Q8_0.gguf"
-      text_encoder_file="text_encoders/qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
-      render_repo="Abiray/MiniMax-H3-Pruned-GGUF"
-      auxiliary_repo="Abiray/MiniMax-H3-GGUF"
+      cat >&2 <<'EOF'
+ERROR: No stable-diffusion.cpp-compatible MiniMax-H3 Q8 GGUF is currently
+published. The Abiray full and pruned Q8 artifacts fail model metadata
+validation. Use fl2va-pruned-q4 or ref2va-pruned-q6 instead.
+See docs/research/abiray-minimax-h3-q8.md for the validated failure details.
+EOF
+      exit 1
       ;;
     *)
       echo "ERROR: Unknown quant test '${quant}'." >&2
