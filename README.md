@@ -291,7 +291,7 @@ flowchart LR
 | FL2VA Q8 smoke | 320x192, 4 steps, two 362-frame segments | 30.132 s | 8.34–8.43 s/segment | 94.29–94.39 s/segment | 6.26 s render / s video | Backfilled from log |
 | FL2VA Q8 quality | 864x480, 20 steps, 124 frames, seed 42 | 5.174 s | 8.36 s | 691.59 s | 133.67 s render / s video | Backfilled from log |
 | FL2VA Q8 quality rung | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.35 s | 1,082.86 s | 209.29 s render / s video | Backfilled from log |
-| FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | Pending | Pending | Pending | Pending | Active render; metrics TSV will be created |
+| FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.49 s | 1,086.96 s | 210.08 s render / s video | Backfilled from log |
 
 The figures above measure the reported `generate_video` phase only, not model
 download time or full process wall time. Keep resolution, step count, seed,
@@ -308,6 +308,7 @@ These test outputs were rendered on the 4 x RTX 3090 host:
 - [FL2VA pruned Q8](samples/fl2va-pruned-q8-20260830-144350.webm)
 - [FL2VA pruned Q8 quality development scene (864x480, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-864x480-20step-20260830-151400.webm)
 - [FL2VA pruned Q8 quality rung (1024x576, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-1024x576-20step-20260830-154804.webm)
+- [FL2VA pruned Q8 detailed human fighters (1024x576, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-detailed-1024x576-20step-20260830-164202.webm)
 
 ## API
 
