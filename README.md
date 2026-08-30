@@ -229,6 +229,8 @@ an illegal CUDA memory access and is intentionally disabled.
 defaults are a single requested five-second scene at 864x480 and 20 Euler
 steps, using deterministic seed 42. The model requires `17k + 5` frames, so
 the request is aligned upward to 124 frames (about 5.17 seconds at 24 FPS).
+On the 4 x RTX 3090 host, this scene's `generate_video` phase completed in
+691.59 seconds (11 minutes 32 seconds).
 The Q4/Q6 commands retain their fast 30-second, 320x192, 4-step smoke-test
 conditions. Export any `MMH3_RENDER_*` variable before invoking a script to
 override these defaults; explicit environment values take precedence over the
