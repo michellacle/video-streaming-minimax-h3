@@ -19,6 +19,7 @@ CHECK_ONLY=0
 CUSTOM_DIFFUSION_FILE=""
 CUSTOM_TEXT_ENCODER_FILE=""
 CUSTOM_RENDER_HF_REPO=""
+CUSTOM_BACKEND=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only) CHECK_ONLY=1; shift ;;
@@ -37,6 +38,11 @@ while [[ $# -gt 0 ]]; do
       [ -n "$CUSTOM_RENDER_HF_REPO" ] || { echo "ERROR: --render-hf-repo requires a repository." >&2; exit 1; }
       shift 2
       ;;
+    --backend)
+      CUSTOM_BACKEND="${2:-}"
+      [ -n "$CUSTOM_BACKEND" ] || { echo "ERROR: --backend requires an assignment." >&2; exit 1; }
+      shift 2
+      ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -48,6 +54,7 @@ SD_CLI_BIN="${SD_CPP_DIR}/build/bin/sd-cli"
 MMH3_RENDER_HF_REPO="${CUSTOM_RENDER_HF_REPO:-${MMH3_RENDER_HF_REPO:-leejet/MiniMax-H3-GGUF}}"
 MMH3_RENDER_DIFFUSION_FILE="${CUSTOM_DIFFUSION_FILE:-${MMH3_RENDER_DIFFUSION_FILE:-minimax_h3_fl2va_pruned-Q4_K_M.gguf}}"
 MMH3_RENDER_TEXT_ENCODER_FILE="${CUSTOM_TEXT_ENCODER_FILE:-${MMH3_RENDER_TEXT_ENCODER_FILE:-qwen3vl_32b_minimax_h3-Q2_K_M.gguf}}"
+MMH3_RENDER_BACKEND="${CUSTOM_BACKEND:-${MMH3_RENDER_BACKEND:-}}"
 MMH3_RENDER_AUX_REPO="${MMH3_RENDER_AUX_REPO:-Comfy-Org/MiniMax-H3}"
 MMH3_RENDER_VIDEO_VAE_FILE="${MMH3_RENDER_VIDEO_VAE_FILE:-vae/minimax_h3_video_vae_fp16.safetensors}"
 MMH3_RENDER_AUDIO_VAE_FILE="${MMH3_RENDER_AUDIO_VAE_FILE:-vae/minimax_h3_audio_vae_fp32.safetensors}"
@@ -135,6 +142,9 @@ echo "Resolution:      ${MMH3_RENDER_WIDTH}x${MMH3_RENDER_HEIGHT}"
 echo "FPS:             ${MMH3_RENDER_FPS}"
 echo "Frames/segment:  ${SEGMENT_FRAMES}"
 echo "Segments:        ${MMH3_RENDER_SEGMENTS} x ${MMH3_RENDER_SEGMENT_SECONDS}s"
+if [ -n "$MMH3_RENDER_BACKEND" ]; then
+  echo "Backend:         ${MMH3_RENDER_BACKEND}"
+fi
 echo ""
 
 ensure_command python3 "Install Python 3 first."
@@ -183,6 +193,14 @@ ensure_downloaded_file "$MMH3_RENDER_AUX_REPO" "$MMH3_RENDER_AUDIO_VAE_FILE" "$A
 render_segment() {
   local segment_index="$1"
   local output_path="$2"
+  local backend_args=()
+  local memory_args=()
+
+  if [ -n "$MMH3_RENDER_BACKEND" ]; then
+    backend_args+=(--backend "$MMH3_RENDER_BACKEND")
+  else
+    memory_args+=(--offload-to-cpu --max-vram "$MMH3_RENDER_MAX_VRAM" --stream-layers)
+  fi
 
   echo ""
   echo "=== Rendering segment ${segment_index}/${MMH3_RENDER_SEGMENTS} ==="
@@ -201,9 +219,8 @@ render_segment() {
     --fps "$MMH3_RENDER_FPS" \
     --video-frames "$SEGMENT_FRAMES" \
     --diffusion-fa \
-    --offload-to-cpu \
-    --max-vram "$MMH3_RENDER_MAX_VRAM" \
-    --stream-layers \
+    "${backend_args[@]}" \
+    "${memory_args[@]}" \
     --rng cpu \
     --output "$output_path" \
     -v

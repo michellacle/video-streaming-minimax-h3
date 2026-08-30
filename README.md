@@ -183,9 +183,11 @@ bash render-quant-tests.sh --all
 
 These entrypoints use GGUF quantization names (`Q4` and `Q6`; not FP4/FP6).
 The Q4 render uses the Q2 text encoder. The Q6 render uses the Q4 text encoder,
-as required by the model's published quant pairing. Results are organized below
-`~/videos/minimax-h3/<quant-name>/`; model weights remain under
-`~/models/minimax-h3-render/` and are ignored by Git.
+as required by the model's published quant pairing. On a four-GPU host, Q6
+splits its diffusion transformer across CUDA 0–1 and its text encoder across
+CUDA 2–3. Results are organized below `~/videos/minimax-h3/<quant-name>/`;
+model weights remain under `~/models/minimax-h3-render/` and are ignored by
+Git.
 
 ## API
 
