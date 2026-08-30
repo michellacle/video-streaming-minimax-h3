@@ -73,6 +73,7 @@ MMH3_RENDER_WIDTH="${MMH3_RENDER_WIDTH:-320}"
 MMH3_RENDER_HEIGHT="${MMH3_RENDER_HEIGHT:-192}"
 MMH3_RENDER_STEPS="${MMH3_RENDER_STEPS:-4}"
 MMH3_RENDER_CFG_SCALE="${MMH3_RENDER_CFG_SCALE:-1.0}"
+MMH3_RENDER_SEED="${MMH3_RENDER_SEED:-42}"
 MMH3_RENDER_FPS="${MMH3_RENDER_FPS:-24}"
 MMH3_RENDER_SEGMENT_SECONDS="${MMH3_RENDER_SEGMENT_SECONDS:-15}"
 MMH3_RENDER_TOTAL_SECONDS="${MMH3_RENDER_TOTAL_SECONDS:-30}"
@@ -84,8 +85,8 @@ TEXT_ENCODER_PATH="${MMH3_RENDER_TEXT_ENCODER_PATH:-${MMH3_RENDER_ASSET_DIR}/${M
 VIDEO_VAE_PATH="${MMH3_RENDER_VIDEO_VAE_PATH:-${MMH3_RENDER_ASSET_DIR}/${MMH3_RENDER_VIDEO_VAE_FILE}}"
 AUDIO_VAE_PATH="${MMH3_RENDER_AUDIO_VAE_PATH:-${MMH3_RENDER_ASSET_DIR}/${MMH3_RENDER_AUDIO_VAE_FILE}}"
 
-if [ "$MMH3_RENDER_SEGMENTS" -ne 2 ]; then
-  echo "ERROR: This simple test currently expects exactly 2 segments." >&2
+if ! [[ "$MMH3_RENDER_SEGMENTS" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: MMH3_RENDER_SEGMENTS must be a positive integer." >&2
   exit 1
 fi
 
@@ -134,9 +135,7 @@ ensure_downloaded_file() {
 SEGMENT_FRAMES=$(align_video_frames $((MMH3_RENDER_FPS * MMH3_RENDER_SEGMENT_SECONDS)))
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="${MMH3_RENDER_OUTPUT_DIR}/${TIMESTAMP}"
-SEGMENT_ONE="${RUN_DIR}/segment-1.webm"
-SEGMENT_TWO="${RUN_DIR}/segment-2.webm"
-FINAL_OUTPUT="${RUN_DIR}/neo-vs-morpheus-stick-figure-30s.webm"
+FINAL_OUTPUT="${RUN_DIR}/neo-vs-morpheus-stick-figure-${MMH3_RENDER_TOTAL_SECONDS}s.webm"
 CONCAT_LIST="${RUN_DIR}/concat.txt"
 
 echo "=== MiniMax-H3 Render Test (${TARGET}) ==="
@@ -149,6 +148,7 @@ echo "Resolution:      ${MMH3_RENDER_WIDTH}x${MMH3_RENDER_HEIGHT}"
 echo "FPS:             ${MMH3_RENDER_FPS}"
 echo "Frames/segment:  ${SEGMENT_FRAMES}"
 echo "Segments:        ${MMH3_RENDER_SEGMENTS} x ${MMH3_RENDER_SEGMENT_SECONDS}s"
+echo "Seed:            ${MMH3_RENDER_SEED}"
 if [ -n "$MMH3_RENDER_BACKEND" ]; then
   echo "Backend:         ${MMH3_RENDER_BACKEND}"
 fi
@@ -225,6 +225,7 @@ render_segment() {
     -H "$MMH3_RENDER_HEIGHT" \
     --fps "$MMH3_RENDER_FPS" \
     --video-frames "$SEGMENT_FRAMES" \
+    --seed "$MMH3_RENDER_SEED" \
     --diffusion-fa \
     "${backend_args[@]}" \
     "${memory_args[@]}" \
@@ -233,10 +234,14 @@ render_segment() {
     -v
 }
 
-render_segment 1 "$SEGMENT_ONE"
-render_segment 2 "$SEGMENT_TWO"
+segment_paths=()
+for ((segment_index = 1; segment_index <= MMH3_RENDER_SEGMENTS; segment_index++)); do
+  segment_path="${RUN_DIR}/segment-${segment_index}.webm"
+  render_segment "$segment_index" "$segment_path"
+  segment_paths+=("$segment_path")
+done
 
-printf "file '%s'\nfile '%s'\n" "$SEGMENT_ONE" "$SEGMENT_TWO" > "$CONCAT_LIST"
+printf "file '%s'\n" "${segment_paths[@]}" > "$CONCAT_LIST"
 
 # sd-cli can produce PCM audio in each WebM segment, but WebM only supports
 # Vorbis or Opus audio. Preserve the generated VP8 video and transcode audio.
@@ -244,6 +249,7 @@ ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy -c:a libopus -b:a 128k "
 
 echo ""
 echo "Done."
-echo "Segment 1:  $SEGMENT_ONE"
-echo "Segment 2:  $SEGMENT_TWO"
+for ((segment_index = 0; segment_index < ${#segment_paths[@]}; segment_index++)); do
+  echo "Segment $((segment_index + 1)):  ${segment_paths[$segment_index]}"
+done
 echo "Final clip: $FINAL_OUTPUT"

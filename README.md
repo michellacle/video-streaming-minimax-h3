@@ -144,7 +144,7 @@ MMH3_CHECK_ONLY=1 bash serve.sh
 ### Render a simple 30-second MiniMax-H3 test clip
 
 The OpenAI-style `llama.cpp` server path above is not suitable for MiniMax-H3
-video generation. For a simple local render test on the RTX 4070 target, use
+video generation. For a quick local render smoke test on the RTX 4070 target, use
 [`render-test.sh`](/home/michel/code/video-streaming-minimax-h3/render-test.sh),
 which follows the published `stable-diffusion.cpp` MiniMax-H3 workflow and
 stitches two short segments into one 30-second WebM clip.
@@ -216,6 +216,29 @@ intentionally uses the verified Unsloth artifact family instead. See
 [the Q8 compatibility note](docs/research/abiray-minimax-h3-q8.md). Its assets
 are isolated under `~/models/minimax-h3-render-q8/` so they cannot be mixed
 with the Q4/Q6 artifacts.
+
+### Current Q8 quality-development conditions
+
+The `gpus` development host is reached with `tailscale ssh michel@gpus` and has
+four RTX 3090 GPUs (24 GiB each). It runs CUDA-enabled `sd-cli` from
+`stable-diffusion.cpp` commit `6b3edaa`. MiniMax-H3 currently renders on one
+GPU with CPU/RAM layer streaming; multi-GPU layer splitting previously caused
+an illegal CUDA memory access and is intentionally disabled.
+
+`create-stick-fighter-video-q8.sh` is the quality-development entrypoint. Its
+defaults are a single requested five-second scene at 864x480 and 20 Euler
+steps, using deterministic seed 42. The model requires `17k + 5` frames, so
+the request is aligned upward to 124 frames (about 5.17 seconds at 24 FPS).
+The Q4/Q6 commands retain their fast 30-second, 320x192, 4-step smoke-test
+conditions. Export any `MMH3_RENDER_*` variable before invoking a script to
+override these defaults; explicit environment values take precedence over the
+target configuration.
+
+Quality iteration changes one factor at a time: first resolution and diffusion
+steps, then the prompt, then first/last-frame or reference-image conditioning
+when character identity and composition need tighter control. All renders use
+the same prompt, seed, model family, 24 FPS, `--cfg-scale 1.0`, and
+`--diffusion-fa` unless the test explicitly changes one of them.
 
 ## Rendered samples
 

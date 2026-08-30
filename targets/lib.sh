@@ -21,6 +21,16 @@ load_target_env() {
   local target_dir="${MMH3_REPO_ROOT}/targets/${target}"
   local env_file="${target_dir}/${target}.env"
   local example_file="${target_dir}/${target}.env.example"
+  local name value
+  local -A inherited_env=()
+
+  # Command-line environment assignments override target defaults. This also
+  # preserves the documented ability to configure scripts without an env file.
+  while IFS='=' read -r name value; do
+    case "$name" in
+      MMH3_*|HF_TOKEN) inherited_env["$name"]="$value" ;;
+    esac
+  done < <(env)
 
   if [ ! -d "$target_dir" ]; then
     echo "ERROR: Unknown target '${target}' (no directory at targets/${target})." >&2
@@ -44,4 +54,8 @@ load_target_env() {
     echo "ERROR: No config found for target '${target}' (expected ${target}.env or ${target}.env.example)." >&2
     exit 1
   fi
+
+  for name in "${!inherited_env[@]}"; do
+    export "$name=${inherited_env[$name]}"
+  done
 }
