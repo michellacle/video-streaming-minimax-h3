@@ -131,8 +131,6 @@ echo "Frames/segment:  ${SEGMENT_FRAMES}"
 echo "Segments:        ${MMH3_RENDER_SEGMENTS} x ${MMH3_RENDER_SEGMENT_SECONDS}s"
 echo ""
 
-ensure_command git "Install git first."
-ensure_command cmake "Install cmake and a C/C++ toolchain first."
 ensure_command python3 "Install Python 3 first."
 ensure_command ffmpeg "Install ffmpeg first."
 ensure_command nvidia-smi "Install NVIDIA drivers first."
@@ -143,6 +141,9 @@ if [ "$CHECK_ONLY" -eq 1 ]; then
 fi
 
 if [ ! -x "$SD_CLI_BIN" ]; then
+  ensure_command git "Install git first."
+  ensure_command cmake "Install cmake and a C/C++ toolchain first."
+
   echo "Building stable-diffusion.cpp with CUDA and WebM support ..."
   if [ ! -d "$SD_CPP_DIR" ]; then
     git clone --recursive https://github.com/leejet/stable-diffusion.cpp "$SD_CPP_DIR"
