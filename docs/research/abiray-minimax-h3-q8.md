@@ -44,7 +44,8 @@ AdaLN tensors and `adaln_t_table`. The matching runtime implementation is in
 | Denoiser | [unsloth/MiniMax-H3-GGUF](https://huggingface.co/unsloth/MiniMax-H3-GGUF) | `minimax_h3_fl2va_pruned-Q8_0.gguf` | 21.4 GB |
 
 The Unsloth repository also publishes the matching 18.2 GB Q4 text encoder and
-both VAEs. The Q8 render entrypoint uses this complete artifact family:
+both VAEs. The Q8 render entrypoint downloads this complete artifact family to
+`~/models/minimax-h3-render-q8/`, separate from the Q4/Q6 cache:
 
 ```bash
 bash create-stick-fighter-video-q8.sh

@@ -213,7 +213,9 @@ VAEs from [unsloth/MiniMax-H3-GGUF](https://huggingface.co/unsloth/MiniMax-H3-GG
 The similarly sized full and pruned Q8 artifacts from Abiray were load-tested
 and rejected by `stable-diffusion.cpp` model metadata validation; the workflow
 intentionally uses the verified Unsloth artifact family instead. See
-[the Q8 compatibility note](docs/research/abiray-minimax-h3-q8.md).
+[the Q8 compatibility note](docs/research/abiray-minimax-h3-q8.md). Its assets
+are isolated under `~/models/minimax-h3-render-q8/` so they cannot be mixed
+with the Q4/Q6 artifacts.
 
 ## Rendered samples
 
