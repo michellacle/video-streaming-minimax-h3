@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Report the current Q8 MiniMax-H3 GGUF compatibility status.
+# Render the MiniMax-H3 FL2VA pruned Q8_0 stick-fighter test.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

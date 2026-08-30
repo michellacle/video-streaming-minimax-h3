@@ -1,4 +1,4 @@
-# Abiray MiniMax-H3 Q8 compatibility
+# MiniMax-H3 Q8 compatibility
 
 ## Status
 
@@ -8,6 +8,11 @@ nor the pruned
 [`MiniMax-H3-FL2VA-Pruned-Q8_0.gguf`](https://huggingface.co/Abiray/MiniMax-H3-Pruned-GGUF)
 can be loaded by the currently installed `stable-diffusion.cpp` MiniMax-H3
 implementation.
+
+The working Q8 alternative is
+[`minimax_h3_fl2va_pruned-Q8_0.gguf`](https://huggingface.co/unsloth/MiniMax-H3-GGUF)
+from Unsloth. Its filename and GGUF tensor metadata match the same artifact
+family as the Leejet Q4/Q6 files already validated by this repository.
 
 ## Root cause
 
@@ -30,15 +35,16 @@ its `adaln_proj.linear.*` and `time_embedder.*` tensors, then adds the pruned
 AdaLN tensors and `adaln_t_table`. The matching runtime implementation is in
 [`minimax_h3.hpp`](https://github.com/leejet/stable-diffusion.cpp/blob/master/src/model/diffusion/minimax_h3.hpp).
 
-## Published Q8 assets
+## Q8 artifacts tested
 
 | Role | Repository | File | Approx. size |
 | --- | --- | --- | ---: |
 | Denoiser | [Abiray/MiniMax-H3-GGUF](https://huggingface.co/Abiray/MiniMax-H3-GGUF) | `MiniMax-H3-FL2VA-Q8_0.gguf` | 36 GB |
 | Denoiser | [Abiray/MiniMax-H3-Pruned-GGUF](https://huggingface.co/Abiray/MiniMax-H3-Pruned-GGUF) | `MiniMax-H3-FL2VA-Pruned-Q8_0.gguf` | 21.6 GB |
+| Denoiser | [unsloth/MiniMax-H3-GGUF](https://huggingface.co/unsloth/MiniMax-H3-GGUF) | `minimax_h3_fl2va_pruned-Q8_0.gguf` | 21.4 GB |
 
-No Q8 artifact has been validated with the installed `stable-diffusion.cpp`
-runtime. The current Q8 command is an explicit guard:
+The Unsloth repository also publishes the matching 18.2 GB Q4 text encoder and
+both VAEs. The Q8 render entrypoint uses this complete artifact family:
 
 ```bash
 bash create-stick-fighter-video-q8.sh
