@@ -74,7 +74,7 @@ run_quant() {
     ref2va-pruned-q6)
       diffusion_file="minimax_h3_ref2va_pruned-Q6_K.gguf"
       text_encoder_file="qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
-      backend="diffusion=cuda0&cuda1,te=cuda2&cuda3,vae=cuda0"
+      backend="diffusion=cuda0,te=cuda1,vae=cuda2"
       ;;
     *)
       echo "ERROR: Unknown quant test '${quant}'." >&2
