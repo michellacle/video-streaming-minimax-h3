@@ -14,7 +14,7 @@ Only one target is implemented today.
 | Target | Hardware | Status |
 |--------|----------|--------|
 | [`dev-rtx4070`](targets/dev-rtx4070/) | 1x NVIDIA RTX 4070 (8 GB VRAM) | **Implemented** — dev/test |
-| [`prod-multi-gpu`](targets/prod-multi-gpu/) | Multi-GPU production machine | Placeholder — not implemented yet |
+| [`prod-multi-gpu`](targets/prod-multi-gpu/) | Multi-GPU production machine | Full-BF16 capacity preflight available |
 
 ## `dev-rtx4070` target (implemented)
 
@@ -163,6 +163,20 @@ What it does:
   the VP8 video stream and encoding audio as Opus
 
 Outputs land under `~/videos/minimax-h3/<timestamp>/`.
+
+### Check official full-BF16 capacity
+
+The official [MiniMaxAI/MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3)
+release is a sharded BF16 deployment rather than the GGUF render stack. Before
+downloading its roughly 134 GiB of one-variant weights, run:
+
+```bash
+bash test-official-bf16.sh
+```
+
+The existing 4 x RTX 3090 host has 96 GiB aggregate VRAM, below the 160 GiB
+effective capacity floor, so it cannot run that release. Details and official
+sources are in [the BF16 viability note](docs/research/minimax-h3-official-bf16.md).
 
 ### Render each configured quantization
 
