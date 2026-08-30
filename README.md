@@ -194,6 +194,9 @@ bash create-stick-fighter-video-q6.sh
 # The first/last-frame Q8 configuration
 bash create-stick-fighter-video-q8.sh
 
+# The next Q8 quality rung: 1024x576 at the same 20-step test conditions
+bash create-stick-fighter-video-q8-1024x576.sh
+
 # Run the two verified configurations sequentially
 bash render-quant-tests.sh --all
 ```
@@ -241,6 +244,13 @@ steps, then the prompt, then first/last-frame or reference-image conditioning
 when character identity and composition need tighter control. All renders use
 the same prompt, seed, model family, 24 FPS, `--cfg-scale 1.0`, and
 `--diffusion-fa` unless the test explicitly changes one of them.
+
+The next test rung is
+[`create-stick-fighter-video-q8-1024x576.sh`](/home/michel/code/video-streaming-minimax-h3/create-stick-fighter-video-q8-1024x576.sh).
+It changes only the canvas from 864x480 to 1024x576, retains 20 steps and the
+five-second deterministic scene, and writes results under
+`~/videos/minimax-h3/fl2va-q8-1024x576/`. It reuses the isolated Q8 model
+cache, so no additional model-weight download is required.
 
 ## Rendered samples
 

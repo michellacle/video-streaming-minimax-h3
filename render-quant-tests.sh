@@ -65,6 +65,7 @@ run_quant() {
   local text_encoder_file
   local render_repo
   local auxiliary_repo
+  local output_dir
   local render_args=()
 
   case "$quant" in
@@ -98,7 +99,8 @@ run_quant() {
   fi
 
   echo "=== Running quant test: ${quant} ==="
-  MMH3_RENDER_OUTPUT_DIR="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3}/${quant}" \
+  output_dir="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3/${quant}}"
+  MMH3_RENDER_OUTPUT_DIR="$output_dir" \
     bash "${SCRIPT_DIR}/render-test.sh" \
       --render-hf-repo "$render_repo" \
       --render-aux-hf-repo "$auxiliary_repo" \
