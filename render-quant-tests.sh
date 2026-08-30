@@ -62,9 +62,7 @@ run_quant() {
   local quant="$1"
   local diffusion_file
   local text_encoder_file
-  local backend=""
   local render_args=()
-  local backend_args=()
 
   case "$quant" in
     fl2va-pruned-q4)
@@ -74,7 +72,6 @@ run_quant() {
     ref2va-pruned-q6)
       diffusion_file="minimax_h3_ref2va_pruned-Q6_K.gguf"
       text_encoder_file="qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
-      backend="diffusion=cuda0,te=cuda1,vae=cuda2"
       ;;
     *)
       echo "ERROR: Unknown quant test '${quant}'." >&2
@@ -86,9 +83,6 @@ run_quant() {
   if [ "$CHECK_ONLY" -eq 1 ]; then
     render_args+=(--check-only)
   fi
-  if [ -n "$backend" ]; then
-    backend_args+=(--backend "$backend")
-  fi
 
   echo "=== Running quant test: ${quant} ==="
   MMH3_RENDER_OUTPUT_DIR="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3}/${quant}" \
@@ -96,7 +90,6 @@ run_quant() {
       --render-hf-repo "leejet/MiniMax-H3-GGUF" \
       --diffusion-file "$diffusion_file" \
       --text-encoder-file "$text_encoder_file" \
-      "${backend_args[@]}" \
       "${render_args[@]}"
 }
 

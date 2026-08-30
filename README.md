@@ -183,12 +183,20 @@ bash render-quant-tests.sh --all
 
 These entrypoints use GGUF quantization names (`Q4` and `Q6`; not FP4/FP6).
 The Q4 render uses the Q2 text encoder. The Q6 render uses the Q4 text encoder,
-as required by the model's published quant pairing. On a multi-GPU host, Q6
-places its diffusion transformer, text encoder, and VAEs on CUDA 0, CUDA 1,
-and CUDA 2 respectively. This avoids both CPU streaming and single-GPU memory
-contention. Results are organized below `~/videos/minimax-h3/<quant-name>/`;
-model weights remain under `~/models/minimax-h3-render/` and are ignored by
-Git.
+as required by the model's published quant pairing. Q6 uses CPU/RAM layer
+streaming by default, which is the verified configuration. Multi-GPU model
+splitting in the current `stable-diffusion.cpp` build produced an illegal CUDA
+memory access with MiniMax-H3 Q6, so it is intentionally not enabled. Results
+are organized below `~/videos/minimax-h3/<quant-name>/`; model weights remain
+under `~/models/minimax-h3-render/` and are ignored by Git.
+
+## Rendered samples
+
+These test outputs were rendered on the 4 x RTX 3090 host:
+
+- [FL2VA pruned Q4, run 1](samples/fl2va-pruned-q4-20260829-190317.webm)
+- [FL2VA pruned Q4, run 2](samples/fl2va-pruned-q4-20260830-022928.webm)
+- [Ref2VA pruned Q6](samples/ref2va-pruned-q6-20260830-135402.webm)
 
 ## API
 
