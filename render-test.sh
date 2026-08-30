@@ -194,7 +194,10 @@ render_segment 1 "$SEGMENT_ONE"
 render_segment 2 "$SEGMENT_TWO"
 
 printf "file '%s'\nfile '%s'\n" "$SEGMENT_ONE" "$SEGMENT_TWO" > "$CONCAT_LIST"
-ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c copy "$FINAL_OUTPUT"
+
+# sd-cli can produce PCM audio in each WebM segment, but WebM only supports
+# Vorbis or Opus audio. Preserve the generated VP8 video and transcode audio.
+ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy -c:a libopus -b:a 128k "$FINAL_OUTPUT"
 
 echo ""
 echo "Done."

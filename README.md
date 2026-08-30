@@ -159,7 +159,8 @@ What it does:
 - downloads the supported MiniMax-H3 diffusion model, text encoder, video VAE,
   and audio VAE
 - renders two 15-second segments at 320x192 / 24 fps / 4 steps
-- concatenates them into one 30-second clip with `ffmpeg`
+- concatenates them into one valid 30-second WebM clip with `ffmpeg`, retaining
+  the VP8 video stream and encoding audio as Opus
 
 Outputs land under `~/videos/minimax-h3/<timestamp>/`.
 
