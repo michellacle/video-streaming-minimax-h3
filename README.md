@@ -191,10 +191,10 @@ bash create-stick-fighter-video-q4.sh
 # The reference-to-video Q6 configuration
 bash create-stick-fighter-video-q6.sh
 
-# The full (unpruned) FL2VA Q8 configuration from Abiray
+# The compatible FL2VA pruned Q8 configuration from Abiray
 bash create-stick-fighter-video-q8.sh
 
-# Run both configurations sequentially
+# Run the two verified configurations sequentially
 bash render-quant-tests.sh --all
 ```
 
@@ -207,11 +207,14 @@ memory access with MiniMax-H3 Q6, so it is intentionally not enabled. Results
 are organized below `~/videos/minimax-h3/<quant-name>/`; model weights remain
 under `~/models/minimax-h3-render/` and are ignored by Git.
 
-The Q8 test uses matching artifacts from
-[Abiray/MiniMax-H3-GGUF](https://huggingface.co/Abiray/MiniMax-H3-GGUF):
-the 36 GB `MiniMax-H3-FL2VA-Q8_0.gguf` denoiser, 14.6 GB Q4 text encoder, and
-the video/audio VAEs. It is a full-model Q8 quantization, not the official
-full-BF16 release. See [the Q8 feasibility note](docs/research/abiray-minimax-h3-q8.md).
+The Q8 test uses the 21.6 GB compatible
+`MiniMax-H3-FL2VA-Pruned-Q8_0.gguf` denoiser from
+[Abiray/MiniMax-H3-Pruned-GGUF](https://huggingface.co/Abiray/MiniMax-H3-Pruned-GGUF),
+with the 14.6 GB Q4 text encoder and video/audio VAEs from
+[Abiray/MiniMax-H3-GGUF](https://huggingface.co/Abiray/MiniMax-H3-GGUF).
+The similarly named 36 GB unpruned Q8 denoiser is incompatible with the
+`stable-diffusion.cpp` MiniMax-H3 implementation. See
+[the Q8 compatibility note](docs/research/abiray-minimax-h3-q8.md).
 
 ## Rendered samples
 

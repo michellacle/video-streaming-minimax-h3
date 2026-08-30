@@ -19,7 +19,7 @@ Usage:
 Available quant tests:
   fl2va-pruned-q4  MiniMax-H3 first/last-frame pruned Q4_K_M (verified)
   ref2va-pruned-q6 MiniMax-H3 reference-to-video pruned Q6_K
-  fl2va-q8         MiniMax-H3 full FL2VA Q8_0 from Abiray
+  fl2va-q8         MiniMax-H3 FL2VA pruned Q8_0 from Abiray
 EOF
 }
 
@@ -81,9 +81,9 @@ run_quant() {
       auxiliary_repo="Comfy-Org/MiniMax-H3"
       ;;
     fl2va-q8)
-      diffusion_file="unet/MiniMax-H3-FL2VA-Q8_0.gguf"
+      diffusion_file="MiniMax-H3-FL2VA-Pruned-Q8_0.gguf"
       text_encoder_file="text_encoders/qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
-      render_repo="Abiray/MiniMax-H3-GGUF"
+      render_repo="Abiray/MiniMax-H3-Pruned-GGUF"
       auxiliary_repo="Abiray/MiniMax-H3-GGUF"
       ;;
     *)

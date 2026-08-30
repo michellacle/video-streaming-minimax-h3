@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render the full MiniMax-H3 FL2VA Q8_0 stick-fighter test.
+# Render the MiniMax-H3 FL2VA pruned Q8_0 stick-fighter test.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
