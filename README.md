@@ -197,6 +197,9 @@ bash create-stick-fighter-video-q8.sh
 # The next Q8 quality rung: 1024x576 at the same 20-step test conditions
 bash create-stick-fighter-video-q8-1024x576.sh
 
+# A detailed human-fighter scene at the proven 1024x576 quality level
+bash create-detailed-matrix-fight-video-q8.sh
+
 # Run the two verified configurations sequentially
 bash render-quant-tests.sh --all
 ```
@@ -253,6 +256,13 @@ five-second deterministic scene, and writes results under
 cache, so no additional model-weight download is required. On `gpus`, the
 5.17-second 1024x576 scene completed in 1,082.86 seconds (18 minutes 03
 seconds).
+
+[`create-detailed-matrix-fight-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-matrix-fight-video-q8.sh)
+is the next controlled test case. It keeps that 1024x576, 20-step, seed-42
+configuration but changes only the prompt: the deliberately minimalist
+stick-figure request becomes two detailed adult martial artists in a furnished
+digital dojo with consoles, pillars, cables, chairs, paper, and sparks. This
+isolates prompt/detail conditioning from resolution and sampler changes.
 
 ## Rendered samples
 
