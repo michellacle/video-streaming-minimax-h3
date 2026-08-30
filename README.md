@@ -224,6 +224,7 @@ These test outputs were rendered on the 4 x RTX 3090 host:
 - [FL2VA pruned Q4, run 1](samples/fl2va-pruned-q4-20260829-190317.webm)
 - [FL2VA pruned Q4, run 2](samples/fl2va-pruned-q4-20260830-022928.webm)
 - [Ref2VA pruned Q6](samples/ref2va-pruned-q6-20260830-135402.webm)
+- [FL2VA pruned Q8](samples/fl2va-pruned-q8-20260830-144350.webm)
 
 ## API
 
