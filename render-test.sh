@@ -16,9 +16,21 @@ TARGET="${TARGET:-dev-rtx4070}"
 load_target_env "$TARGET"
 
 CHECK_ONLY=0
+CUSTOM_DIFFUSION_FILE=""
+CUSTOM_TEXT_ENCODER_FILE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only) CHECK_ONLY=1; shift ;;
+    --diffusion-file)
+      CUSTOM_DIFFUSION_FILE="${2:-}"
+      [ -n "$CUSTOM_DIFFUSION_FILE" ] || { echo "ERROR: --diffusion-file requires a filename." >&2; exit 1; }
+      shift 2
+      ;;
+    --text-encoder-file)
+      CUSTOM_TEXT_ENCODER_FILE="${2:-}"
+      [ -n "$CUSTOM_TEXT_ENCODER_FILE" ] || { echo "ERROR: --text-encoder-file requires a filename." >&2; exit 1; }
+      shift 2
+      ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
@@ -28,8 +40,8 @@ SD_CPP_DIR="${SCRIPT_DIR}/.stable-diffusion.cpp"
 SD_CLI_BIN="${SD_CPP_DIR}/build/bin/sd-cli"
 
 MMH3_RENDER_HF_REPO="${MMH3_RENDER_HF_REPO:-leejet/MiniMax-H3-GGUF}"
-MMH3_RENDER_DIFFUSION_FILE="${MMH3_RENDER_DIFFUSION_FILE:-minimax_h3_fl2va_pruned-Q4_K_M.gguf}"
-MMH3_RENDER_TEXT_ENCODER_FILE="${MMH3_RENDER_TEXT_ENCODER_FILE:-qwen3vl_32b_minimax_h3-Q2_K_M.gguf}"
+MMH3_RENDER_DIFFUSION_FILE="${CUSTOM_DIFFUSION_FILE:-${MMH3_RENDER_DIFFUSION_FILE:-minimax_h3_fl2va_pruned-Q4_K_M.gguf}}"
+MMH3_RENDER_TEXT_ENCODER_FILE="${CUSTOM_TEXT_ENCODER_FILE:-${MMH3_RENDER_TEXT_ENCODER_FILE:-qwen3vl_32b_minimax_h3-Q2_K_M.gguf}}"
 MMH3_RENDER_AUX_REPO="${MMH3_RENDER_AUX_REPO:-Comfy-Org/MiniMax-H3}"
 MMH3_RENDER_VIDEO_VAE_FILE="${MMH3_RENDER_VIDEO_VAE_FILE:-vae/minimax_h3_video_vae_fp16.safetensors}"
 MMH3_RENDER_AUDIO_VAE_FILE="${MMH3_RENDER_AUDIO_VAE_FILE:-vae/minimax_h3_audio_vae_fp32.safetensors}"

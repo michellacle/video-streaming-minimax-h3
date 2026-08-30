@@ -164,6 +164,29 @@ What it does:
 
 Outputs land under `~/videos/minimax-h3/<timestamp>/`.
 
+### Render each configured quantization
+
+[`render-quant-tests.sh`](/home/michel/code/video-streaming-minimax-h3/render-quant-tests.sh)
+runs the render test for a named configuration. Its default matrix reflects the
+video-render assets found on the multi-GPU host:
+
+```bash
+# The verified first/last-frame Q4 render configuration
+bash create-stick-fighter-video-q4.sh
+
+# The reference-to-video Q6 configuration
+bash create-stick-fighter-video-q6.sh
+
+# Run both configurations sequentially
+bash render-quant-tests.sh --all
+```
+
+These entrypoints use GGUF quantization names (`Q4` and `Q6`; not FP4/FP6).
+The Q4 render uses the Q2 text encoder. The Q6 render uses the Q4 text encoder,
+as required by the model's published quant pairing. Results are organized below
+`~/videos/minimax-h3/<quant-name>/`; model weights remain under
+`~/models/minimax-h3-render/` and are ignored by Git.
+
 ## API
 
 OpenAI-compatible endpoints (served by llama.cpp's `llama-server`):
