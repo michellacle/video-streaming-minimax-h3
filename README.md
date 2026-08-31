@@ -246,6 +246,24 @@ four RTX 3090 GPUs (24 GiB each). It runs CUDA-enabled `sd-cli` from
 GPU with CPU/RAM layer streaming; multi-GPU layer splitting previously caused
 an illegal CUDA memory access and is intentionally disabled.
 
+### Resilient remote render jobs
+
+Use [`remote-render.sh`](/home/michel/code/video-streaming-minimax-h3/remote-render.sh)
+for long jobs on `gpus`, not a foreground SSH command. It runs each render under
+both `setsid` and `nohup`, with redirected standard input/output, so a local
+terminal close or SSH/Tailscale disconnect does not stop the remote renderer.
+Each job records a persistent PID, status, timestamps, and log under
+`~/videos/minimax-h3/remote-jobs/`.
+
+```bash
+# Start a job; retain the returned job ID.
+bash remote-render.sh start create-gold-freight-train-video-q8.sh
+
+# Safely reconnect to inspect it.
+bash remote-render.sh status render-YYYYMMDD-HHMMSS-PID
+bash remote-render.sh logs render-YYYYMMDD-HHMMSS-PID
+```
+
 `create-stick-fighter-video-q8.sh` is the quality-development entrypoint. Its
 defaults are a single requested five-second scene at 864x480 and 20 Euler
 steps, using deterministic seed 42. The model requires `17k + 5` frames, so
