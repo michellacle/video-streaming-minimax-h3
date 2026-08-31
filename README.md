@@ -206,6 +206,9 @@ bash create-detailed-matrix-fight-with-normalized-audio-video-q8.sh
 # A distinct gold-configuration fight beat with normalized delivery audio
 bash create-gold-matrix-fight-round-two-video-q8.sh
 
+# A five-second diesel-electric freight train in mountain forest terrain
+bash create-gold-freight-train-video-q8.sh
+
 # A character-locked Q8 reference-to-video scene
 bash create-detailed-reference-fight-video-q8.sh
 
@@ -285,6 +288,11 @@ uses the same approved FL2VA Q8 render settings and delivery-audio gate for a
 new, reproducible choreography: dodge, spinning kick, pivot, and palm strike.
 Only scene direction and its synchronized soundtrack/foley request differ from
 the visual baseline.
+
+[`create-gold-freight-train-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-gold-freight-train-video-q8.sh)
+uses the same approved FL2VA Q8 render settings and delivery-audio gate for a
+five-second mountain-railway scene: three diesel-electric locomotives lead a
+freight train through a majestic evergreen forest and mountain valley.
 
 [`create-detailed-reference-fight-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-reference-fight-video-q8.sh)
 is the character-consistency test. It holds the detailed-scene resolution,
