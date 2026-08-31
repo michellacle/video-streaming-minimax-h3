@@ -10,7 +10,7 @@ REMOTE_JOB_ROOT="${MMH3_REMOTE_JOB_ROOT:-/home/michel/videos/minimax-h3/remote-j
 usage() {
   cat <<'USAGE'
 Usage:
-  bash remote-render.sh start SCRIPT [SCRIPT_ARGUMENT ...]
+  bash remote-render.sh start [--env NAME=VALUE ...] SCRIPT [SCRIPT_ARGUMENT ...]
   bash remote-render.sh status JOB_ID
   bash remote-render.sh logs JOB_ID
 
@@ -45,10 +45,12 @@ start_job() {
 
   local job_id="render-$(date -u +%Y%m%d-%H%M%S)-$$"
   local argument_data
+  local environment_data
   argument_data="$(printf '%s\0' "$@" | base64 -w 0)"
+  environment_data="$(printf '%s\0' "${ENVIRONMENT_ASSIGNMENTS[@]}" | base64 -w 0)"
 
   tailscale ssh "$REMOTE_HOST" bash -s -- \
-    "$REMOTE_REPO_DIR" "$REMOTE_JOB_ROOT" "$job_id" "$local_script" "$argument_data" <<'REMOTE'
+    "$REMOTE_REPO_DIR" "$REMOTE_JOB_ROOT" "$job_id" "$local_script" "$argument_data" "$environment_data" <<'REMOTE'
 set -euo pipefail
 
 repo_dir="$1"
@@ -56,6 +58,7 @@ job_root="$2"
 job_id="$3"
 script_relative_path="$4"
 argument_data="$5"
+environment_data="$6"
 remote_script="${repo_dir}/${script_relative_path}"
 job_dir="${job_root}/${job_id}"
 
@@ -66,6 +69,7 @@ job_dir="${job_root}/${job_id}"
 
 mkdir -p "$job_dir"
 printf '%s' "$argument_data" | base64 -d > "$job_dir/arguments.bin"
+printf '%s' "$environment_data" | base64 -d > "$job_dir/environment.bin"
 cat > "$job_dir/runner.sh" <<'RUNNER'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -78,6 +82,19 @@ started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'state=running\npid=%s\nstarted_at=%s\n' "$$" "$started_at" > "$job_dir/status"
 
 set +e
+mapfile -d '' -t environment_assignments < "$job_dir/environment.bin"
+for assignment in "${environment_assignments[@]}"; do
+  [ -n "$assignment" ] || continue
+  variable_name="${assignment%%=*}"
+  case "$variable_name" in
+    ''|*[!A-Za-z0-9_]*|[0-9]*)
+      echo "ERROR: Invalid environment variable assignment." >&2
+      exit 2
+      ;;
+  esac
+  export "$assignment"
+done
+
 bash "$render_script" "$@" > "$job_dir/render.log" 2>&1
 exit_code="$?"
 set -e
@@ -151,11 +168,27 @@ REMOTE
 
 case "$1" in
   start)
-    [ "$#" -ge 2 ] || {
+    shift
+    ENVIRONMENT_ASSIGNMENTS=()
+    while [ "$#" -gt 0 ] && [ "$1" = "--env" ]; do
+      [ "$#" -ge 2 ] || {
+        echo "ERROR: --env requires NAME=VALUE." >&2
+        exit 1
+      }
+      case "$2" in
+        *=*) ENVIRONMENT_ASSIGNMENTS+=("$2") ;;
+        *)
+          echo "ERROR: --env requires NAME=VALUE." >&2
+          exit 1
+          ;;
+      esac
+      shift 2
+    done
+    [ "$#" -ge 1 ] || {
       usage >&2
       exit 1
     }
-    start_job "${@:2}"
+    start_job "$@"
     ;;
   status)
     [ "$#" -eq 2 ] || {

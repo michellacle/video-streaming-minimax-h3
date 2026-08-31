@@ -259,6 +259,14 @@ Each job records a persistent PID, status, timestamps, and log under
 # Start a job; retain the returned job ID.
 bash remote-render.sh start create-gold-freight-train-video-q8.sh
 
+# Start a custom prompt with explicit quality settings.
+bash remote-render.sh start \
+  --env MMH3_RENDER_PROMPT='A five-second scene description.' \
+  --env MMH3_RENDER_WIDTH=1024 \
+  --env MMH3_RENDER_HEIGHT=576 \
+  --env MMH3_RENDER_STEPS=20 \
+  create-custom-video-q8.sh
+
 # Safely reconnect to inspect it.
 bash remote-render.sh status render-YYYYMMDD-HHMMSS-PID
 bash remote-render.sh logs render-YYYYMMDD-HHMMSS-PID
