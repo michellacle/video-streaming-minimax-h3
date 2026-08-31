@@ -203,6 +203,9 @@ bash create-detailed-matrix-fight-video-q8.sh
 # The visual-quality baseline with normalized delivery audio
 bash create-detailed-matrix-fight-with-normalized-audio-video-q8.sh
 
+# A distinct gold-configuration fight beat with normalized delivery audio
+bash create-gold-matrix-fight-round-two-video-q8.sh
+
 # A character-locked Q8 reference-to-video scene
 bash create-detailed-reference-fight-video-q8.sh
 
@@ -276,6 +279,12 @@ It is the established visual-quality baseline. Its
 [`create-detailed-matrix-fight-with-normalized-audio-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-matrix-fight-with-normalized-audio-video-q8.sh)
 companion keeps every generation setting and the prompt unchanged, applying
 only the final `loudnorm` mux filter and the -15 dBFS acceptance gate.
+
+[`create-gold-matrix-fight-round-two-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-gold-matrix-fight-round-two-video-q8.sh)
+uses the same approved FL2VA Q8 render settings and delivery-audio gate for a
+new, reproducible choreography: dodge, spinning kick, pivot, and palm strike.
+Only scene direction and its synchronized soundtrack/foley request differ from
+the visual baseline.
 
 [`create-detailed-reference-fight-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-reference-fight-video-q8.sh)
 is the character-consistency test. It holds the detailed-scene resolution,
