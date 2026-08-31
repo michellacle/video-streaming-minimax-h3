@@ -302,6 +302,7 @@ flowchart LR
 | FL2VA Q8 quality | 864x480, 20 steps, 124 frames, seed 42 | 5.174 s | 8.36 s | 691.59 s | 133.67 s render / s video | Backfilled from log |
 | FL2VA Q8 quality rung | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.35 s | 1,082.86 s | 209.29 s render / s video | Backfilled from log |
 | FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.49 s | 1,086.96 s | 210.08 s render / s video | Backfilled from log |
+| Ref2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42, 2 reference images | 5.174 s | 10.46 s | 1,224.14 s | 236.60 s render / s video | Automatic `metrics.tsv` |
 
 The figures above measure the reported `generate_video` phase only, not model
 download time or full process wall time. Keep resolution, step count, seed,
@@ -319,6 +320,7 @@ These test outputs were rendered on the 4 x RTX 3090 host:
 - [FL2VA pruned Q8 quality development scene (864x480, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-864x480-20step-20260830-151400.webm)
 - [FL2VA pruned Q8 quality rung (1024x576, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-quality-1024x576-20step-20260830-154804.webm)
 - [FL2VA pruned Q8 detailed human fighters (1024x576, 20 steps, 5.17 s)](samples/fl2va-pruned-q8-detailed-1024x576-20step-20260830-164202.webm)
+- [Ref2VA pruned Q8 detailed human fighters with character references (1024x576, 20 steps, 5.17 s)](samples/ref2va-pruned-q8-detailed-1024x576-20step-20260830-203143.webm)
 
 ## API
 
