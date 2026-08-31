@@ -256,11 +256,12 @@ Each job records a persistent PID, status, timestamps, and log under
 `~/videos/minimax-h3/remote-jobs/`.
 
 ```bash
-# Start a job; retain the returned job ID.
-bash remote-render.sh start create-gold-freight-train-video-q8.sh
+# Start a job on an available GPU; retain the returned job ID and GPU index.
+bash remote-render.sh start --gpu auto create-gold-freight-train-video-q8.sh
 
 # Start a custom prompt with explicit quality settings.
 bash remote-render.sh start \
+  --gpu auto \
   --env MMH3_RENDER_PROMPT='A five-second scene description.' \
   --env MMH3_RENDER_WIDTH=1024 \
   --env MMH3_RENDER_HEIGHT=576 \

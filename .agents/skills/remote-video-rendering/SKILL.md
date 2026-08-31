@@ -35,10 +35,14 @@ use a single 15-second segment only after the user explicitly requests it.
    plus a final -15 dBFS acceptance gate.
 3. Start the job only through
    [`remote-render.sh`](../../../remote-render.sh). It encapsulates the
-   `michel@gpus` Tailscale host, isolated process session, logs, and PID:
+   `michel@gpus` Tailscale host, isolated process session, logs, PID, and GPU
+   dispatch. The default `--gpu auto` chooses an idle GPU by VRAM use and
+   reserves it for the entire render. Use `--gpu N` only to deliberately pin a
+   job to an otherwise idle GPU:
 
    ```bash
    bash remote-render.sh start \
+     --gpu auto \
      --env MMH3_RENDER_PROMPT='...' \
      --env MMH3_RENDER_WIDTH=1024 \
      --env MMH3_RENDER_HEIGHT=576 \
@@ -50,9 +54,10 @@ use a single 15-second segment only after the user explicitly requests it.
    ```
 
    The launcher starts the remote process under `setsid` and `nohup`, redirects
-   standard input/output, and stores `status`, `render.log`, and the PID under
-   `~/videos/minimax-h3/remote-jobs/<job-id>/`. SSH/Tailscale disconnects do not
-   terminate that process.
+   standard input/output, pins `CUDA_VISIBLE_DEVICES` to the assigned GPU, and
+   stores the GPU index, status, `render.log`, and PID under
+   `~/videos/minimax-h3/remote-jobs/<job-id>/`. SSH/Tailscale disconnects do
+   not terminate that process.
 4. Preserve the returned job ID. Reconnect safely with:
 
    ```bash
