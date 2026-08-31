@@ -81,6 +81,7 @@ MMH3_RENDER_HEIGHT="${MMH3_RENDER_HEIGHT:-192}"
 MMH3_RENDER_STEPS="${MMH3_RENDER_STEPS:-4}"
 MMH3_RENDER_CFG_SCALE="${MMH3_RENDER_CFG_SCALE:-1.0}"
 MMH3_RENDER_SEED="${MMH3_RENDER_SEED:-42}"
+MMH3_RENDER_MIN_AUDIO_MEAN_DB="${MMH3_RENDER_MIN_AUDIO_MEAN_DB:-}"
 MMH3_RENDER_FPS="${MMH3_RENDER_FPS:-24}"
 MMH3_RENDER_SEGMENT_SECONDS="${MMH3_RENDER_SEGMENT_SECONDS:-15}"
 MMH3_RENDER_TOTAL_SECONDS="${MMH3_RENDER_TOTAL_SECONDS:-30}"
@@ -151,10 +152,11 @@ now_ms() {
 }
 
 record_metric() {
-  local phase="$1"
+  local metric="$1"
   local subject="$2"
-  local elapsed_ms="$3"
-  printf '%s\t%s\t%s\n' "$phase" "$subject" "$elapsed_ms" >> "$METRICS_FILE"
+  local value="$3"
+  local unit="$4"
+  printf '%s\t%s\t%s\t%s\n' "$metric" "$subject" "$value" "$unit" >> "$METRICS_FILE"
 }
 
 echo "=== MiniMax-H3 Render Test (${TARGET}) ==="
@@ -217,14 +219,13 @@ if ! "${VENV_DIR}/bin/python3" -c "import huggingface_hub" >/dev/null 2>&1; then
 fi
 
 mkdir -p "$MMH3_RENDER_ASSET_DIR" "$RUN_DIR"
-printf 'phase\tsubject\telapsed_ms\n' > "$METRICS_FILE"
-
+printf 'metric\tsubject\tvalue\tunit\n' > "$METRICS_FILE"
 assets_start_ms=$(now_ms)
 ensure_downloaded_file "$MMH3_RENDER_HF_REPO" "$MMH3_RENDER_DIFFUSION_FILE" "$DIFFUSION_MODEL_PATH"
 ensure_downloaded_file "$MMH3_RENDER_HF_REPO" "$MMH3_RENDER_TEXT_ENCODER_FILE" "$TEXT_ENCODER_PATH"
 ensure_downloaded_file "$MMH3_RENDER_AUX_REPO" "$MMH3_RENDER_VIDEO_VAE_FILE" "$VIDEO_VAE_PATH"
 ensure_downloaded_file "$MMH3_RENDER_AUX_REPO" "$MMH3_RENDER_AUDIO_VAE_FILE" "$AUDIO_VAE_PATH"
-record_metric "asset-availability" "all-assets" "$(( $(now_ms) - assets_start_ms ))"
+record_metric "asset-availability" "all-assets" "$(( $(now_ms) - assets_start_ms ))" "ms"
 
 render_segment() {
   local segment_index="$1"
@@ -271,16 +272,16 @@ render_segment() {
     --rng cpu \
     --output "$output_path" \
     -v 2>&1 | tee "$segment_log"
-  record_metric "sd-cli-wall" "segment-${segment_index}" "$(( $(now_ms) - start_ms ))"
+  record_metric "sd-cli-wall" "segment-${segment_index}" "$(( $(now_ms) - start_ms ))" "ms"
 
   conditioning_seconds=$(sed -n 's/.*get_learned_condition completed, taking \([0-9.]*\)s.*/\1/p' "$segment_log" | tail -1)
   if [ -n "$conditioning_seconds" ]; then
-    record_metric "conditioning" "segment-${segment_index}" "$(awk -v seconds="$conditioning_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')"
+    record_metric "conditioning" "segment-${segment_index}" "$(awk -v seconds="$conditioning_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')" "ms"
   fi
 
   generation_seconds=$(sed -n 's/.*generate_video completed in \([0-9.]*\)s.*/\1/p' "$segment_log" | tail -1)
   if [ -n "$generation_seconds" ]; then
-    record_metric "generate-video" "segment-${segment_index}" "$(awk -v seconds="$generation_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')"
+    record_metric "generate-video" "segment-${segment_index}" "$(awk -v seconds="$generation_seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')" "ms"
   fi
 }
 
@@ -297,7 +298,29 @@ printf "file '%s'\n" "${segment_paths[@]}" > "$CONCAT_LIST"
 # Vorbis or Opus audio. Preserve the generated VP8 video and transcode audio.
 concat_start_ms=$(now_ms)
 ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy -c:a libopus -b:a 128k "$FINAL_OUTPUT"
-record_metric "webm-mux" "final-output" "$(( $(now_ms) - concat_start_ms ))"
+record_metric "webm-mux" "final-output" "$(( $(now_ms) - concat_start_ms ))" "ms"
+
+audio_mean_db=$(ffmpeg -v info -i "$FINAL_OUTPUT" -map 0:a:0 -af volumedetect -f null - 2>&1 \
+  | sed -n 's/.*mean_volume: \(-\?[0-9.]*\) dB.*/\1/p' \
+  | tail -1)
+if [ -z "$audio_mean_db" ]; then
+  echo "ERROR: Could not measure final audio volume." >&2
+  exit 1
+fi
+record_metric "audio-mean-volume" "final-output" "$audio_mean_db" "dBFS"
+echo "Audio mean volume: ${audio_mean_db} dBFS"
+
+if [ -n "$MMH3_RENDER_MIN_AUDIO_MEAN_DB" ]; then
+  if ! [[ "$MMH3_RENDER_MIN_AUDIO_MEAN_DB" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; then
+    echo "ERROR: MMH3_RENDER_MIN_AUDIO_MEAN_DB must be a numeric dBFS value." >&2
+    exit 1
+  fi
+  if ! awk -v measured="$audio_mean_db" -v minimum="$MMH3_RENDER_MIN_AUDIO_MEAN_DB" \
+    'BEGIN { exit measured >= minimum ? 0 : 1 }'; then
+    echo "ERROR: Final audio mean volume ${audio_mean_db} dBFS is below the required ${MMH3_RENDER_MIN_AUDIO_MEAN_DB} dBFS." >&2
+    exit 1
+  fi
+fi
 
 echo ""
 echo "Done."

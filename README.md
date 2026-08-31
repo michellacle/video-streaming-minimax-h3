@@ -203,6 +203,9 @@ bash create-detailed-matrix-fight-video-q8.sh
 # A character-locked Q8 reference-to-video scene
 bash create-detailed-reference-fight-video-q8.sh
 
+# The same character-locked scene with explicit score and fight audio
+bash create-detailed-reference-fight-with-soundtrack-video-q8.sh
+
 # Run the two verified configurations sequentially
 bash render-quant-tests.sh --all
 ```
@@ -274,15 +277,20 @@ Ref2VA denoiser, and supplies two generated character crops with repeated
 `--ref-image` options. The prompt assigns the first crop to the black-coated
 fighter and the second crop to the suited fighter.
 
+[`create-detailed-reference-fight-with-soundtrack-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-reference-fight-with-soundtrack-video-q8.sh)
+is the audio regression test. It keeps the Ref2VA test configuration and
+reference images unchanged, changing only the prompt's explicit soundtrack,
+foley, and ambience instructions.
+
 ### Pipeline and throughput measurements
 
-Each new render writes `<run>/metrics.tsv`, a tab-separated phase log in
-milliseconds. It records asset availability (download time on cold runs, cache
-check time on warm runs), `sd-cli` wall time, text conditioning,
-`generate_video`, and final WebM muxing. The two internal `sd-cli` timings are
-parsed from its own log; the full `sd-cli` wall time includes model staging,
-conditioning, generation, decoding, and writing. This is the measurement
-baseline for future optimization work.
+Each new render writes `<run>/metrics.tsv`, a tab-separated phase log. It
+records asset availability (download time on cold runs, cache check time on
+warm runs), `sd-cli` wall time, text conditioning, `generate_video`, final
+WebM muxing, and final audio mean volume in dBFS. The two internal `sd-cli`
+timings are parsed from its own log; the full `sd-cli` wall time includes model
+staging, conditioning, generation, decoding, and writing. This is the
+measurement baseline for future optimization work.
 
 ```mermaid
 flowchart LR
