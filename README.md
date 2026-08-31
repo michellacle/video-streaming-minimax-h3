@@ -280,7 +280,9 @@ fighter and the second crop to the suited fighter.
 [`create-detailed-reference-fight-with-soundtrack-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-reference-fight-with-soundtrack-video-q8.sh)
 is the audio regression test. It keeps the Ref2VA test configuration and
 reference images unchanged, changing only the prompt's explicit soundtrack,
-foley, and ambience instructions.
+foley, and ambience instructions. It then applies `loudnorm` at the WebM mux
+stage (target `I=-8`, true-peak ceiling `-1.5`) and fails the run when final
+audio mean volume is below -15 dBFS.
 
 ### Pipeline and throughput measurements
 
@@ -302,15 +304,15 @@ flowchart LR
     F --> G[WebM + metrics.tsv<br/>shareable sample]
 ```
 
-| Test case | Model / conditions | Output | Conditioning | `generate_video` | Generation throughput | Measurement status |
-| --- | --- | --- | ---: | ---: | ---: | --- |
-| FL2VA Q4, runs 1–2 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Historical samples only |
-| Ref2VA Q6 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Historical sample only |
-| FL2VA Q8 smoke | 320x192, 4 steps, two 362-frame segments | 30.132 s | 8.34–8.43 s/segment | 94.29–94.39 s/segment | 6.26 s render / s video | Backfilled from log |
-| FL2VA Q8 quality | 864x480, 20 steps, 124 frames, seed 42 | 5.174 s | 8.36 s | 691.59 s | 133.67 s render / s video | Backfilled from log |
-| FL2VA Q8 quality rung | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.35 s | 1,082.86 s | 209.29 s render / s video | Backfilled from log |
-| FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.49 s | 1,086.96 s | 210.08 s render / s video | Backfilled from log |
-| Ref2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42, 2 reference images | 5.174 s | 10.46 s | 1,224.14 s | 236.60 s render / s video | Automatic `metrics.tsv` |
+| Test case | Model / conditions | Output | Conditioning | `generate_video` | Audio mean | Generation throughput | Measurement status |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- |
+| FL2VA Q4, runs 1–2 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Not captured | Historical samples only |
+| Ref2VA Q6 | 320x192, 4 steps, two 362-frame segments | 30.132 s | Not captured | Not captured | Not captured | Not captured | Historical sample only |
+| FL2VA Q8 smoke | 320x192, 4 steps, two 362-frame segments | 30.132 s | 8.34–8.43 s/segment | 94.29–94.39 s/segment | Not captured | 6.26 s render / s video | Backfilled from log |
+| FL2VA Q8 quality | 864x480, 20 steps, 124 frames, seed 42 | 5.174 s | 8.36 s | 691.59 s | Not captured | 133.67 s render / s video | Backfilled from log |
+| FL2VA Q8 quality rung | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.35 s | 1,082.86 s | -10.4 dBFS | 209.29 s render / s video | Backfilled from log |
+| FL2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42 | 5.174 s | 8.49 s | 1,086.96 s | -18.1 dBFS | 210.08 s render / s video | Backfilled from log |
+| Ref2VA Q8 detailed humans | 1024x576, 20 steps, 124 frames, seed 42, 2 reference images | 5.174 s | 10.46 s | 1,224.14 s | -20.1 dBFS | 236.60 s render / s video | Automatic `metrics.tsv` |
 
 The figures above measure the reported `generate_video` phase only, not model
 download time or full process wall time. Keep resolution, step count, seed,

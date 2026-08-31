@@ -82,6 +82,7 @@ MMH3_RENDER_STEPS="${MMH3_RENDER_STEPS:-4}"
 MMH3_RENDER_CFG_SCALE="${MMH3_RENDER_CFG_SCALE:-1.0}"
 MMH3_RENDER_SEED="${MMH3_RENDER_SEED:-42}"
 MMH3_RENDER_MIN_AUDIO_MEAN_DB="${MMH3_RENDER_MIN_AUDIO_MEAN_DB:-}"
+MMH3_RENDER_AUDIO_FILTER="${MMH3_RENDER_AUDIO_FILTER:-}"
 MMH3_RENDER_FPS="${MMH3_RENDER_FPS:-24}"
 MMH3_RENDER_SEGMENT_SECONDS="${MMH3_RENDER_SEGMENT_SECONDS:-15}"
 MMH3_RENDER_TOTAL_SECONDS="${MMH3_RENDER_TOTAL_SECONDS:-30}"
@@ -297,7 +298,11 @@ printf "file '%s'\n" "${segment_paths[@]}" > "$CONCAT_LIST"
 # sd-cli can produce PCM audio in each WebM segment, but WebM only supports
 # Vorbis or Opus audio. Preserve the generated VP8 video and transcode audio.
 concat_start_ms=$(now_ms)
-ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy -c:a libopus -b:a 128k "$FINAL_OUTPUT"
+audio_filter_args=()
+if [ -n "$MMH3_RENDER_AUDIO_FILTER" ]; then
+  audio_filter_args=(-af "$MMH3_RENDER_AUDIO_FILTER")
+fi
+ffmpeg -y -f concat -safe 0 -i "$CONCAT_LIST" -c:v copy "${audio_filter_args[@]}" -c:a libopus -b:a 128k "$FINAL_OUTPUT"
 record_metric "webm-mux" "final-output" "$(( $(now_ms) - concat_start_ms ))" "ms"
 
 audio_mean_db=$(ffmpeg -v info -i "$FINAL_OUTPUT" -map 0:a:0 -af volumedetect -f null - 2>&1 \
