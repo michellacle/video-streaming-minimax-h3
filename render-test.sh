@@ -21,6 +21,7 @@ CUSTOM_TEXT_ENCODER_FILE=""
 CUSTOM_RENDER_HF_REPO=""
 CUSTOM_RENDER_AUX_HF_REPO=""
 CUSTOM_BACKEND=""
+REFERENCE_IMAGES=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only) CHECK_ONLY=1; shift ;;
@@ -47,6 +48,12 @@ while [[ $# -gt 0 ]]; do
     --backend)
       CUSTOM_BACKEND="${2:-}"
       [ -n "$CUSTOM_BACKEND" ] || { echo "ERROR: --backend requires an assignment." >&2; exit 1; }
+      shift 2
+      ;;
+    --ref-image)
+      reference_image="${2:-}"
+      [ -n "$reference_image" ] || { echo "ERROR: --ref-image requires a file path." >&2; exit 1; }
+      REFERENCE_IMAGES+=("$reference_image")
       shift 2
       ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -170,6 +177,13 @@ ensure_command python3 "Install Python 3 first."
 ensure_command ffmpeg "Install ffmpeg first."
 ensure_command nvidia-smi "Install NVIDIA drivers first."
 
+for reference_image in "${REFERENCE_IMAGES[@]}"; do
+  if [ ! -f "$reference_image" ]; then
+    echo "ERROR: Reference image not found: $reference_image" >&2
+    exit 1
+  fi
+done
+
 if [ "$CHECK_ONLY" -eq 1 ]; then
   echo "Pre-flight checks passed."
   exit 0
@@ -221,12 +235,16 @@ render_segment() {
   local generation_seconds
   local backend_args=()
   local memory_args=()
+  local reference_args=()
 
   if [ -n "$MMH3_RENDER_BACKEND" ]; then
     backend_args+=(--backend "$MMH3_RENDER_BACKEND")
   else
     memory_args+=(--offload-to-cpu --max-vram "$MMH3_RENDER_MAX_VRAM" --stream-layers)
   fi
+  for reference_image in "${REFERENCE_IMAGES[@]}"; do
+    reference_args+=(--ref-image "$reference_image")
+  done
 
   echo ""
   echo "=== Rendering segment ${segment_index}/${MMH3_RENDER_SEGMENTS} ==="
@@ -247,6 +265,7 @@ render_segment() {
     --video-frames "$SEGMENT_FRAMES" \
     --seed "$MMH3_RENDER_SEED" \
     --diffusion-fa \
+    "${reference_args[@]}" \
     "${backend_args[@]}" \
     "${memory_args[@]}" \
     --rng cpu \

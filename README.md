@@ -200,6 +200,9 @@ bash create-stick-fighter-video-q8-1024x576.sh
 # A detailed human-fighter scene at the proven 1024x576 quality level
 bash create-detailed-matrix-fight-video-q8.sh
 
+# A character-locked Q8 reference-to-video scene
+bash create-detailed-reference-fight-video-q8.sh
+
 # Run the two verified configurations sequentially
 bash render-quant-tests.sh --all
 ```
@@ -263,6 +266,13 @@ configuration but changes only the prompt: the deliberately minimalist
 stick-figure request becomes two detailed adult martial artists in a furnished
 digital dojo with consoles, pillars, cables, chairs, paper, and sparks. This
 isolates prompt/detail conditioning from resolution and sampler changes.
+
+[`create-detailed-reference-fight-video-q8.sh`](/home/michel/code/video-streaming-minimax-h3/create-detailed-reference-fight-video-q8.sh)
+is the character-consistency test. It holds the detailed-scene resolution,
+steps, seed, duration, and scene content constant, changes to the matching Q8
+Ref2VA denoiser, and supplies two generated character crops with repeated
+`--ref-image` options. The prompt assigns the first crop to the black-coated
+fighter and the second crop to the suited fighter.
 
 ### Pipeline and throughput measurements
 

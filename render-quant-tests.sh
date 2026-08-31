@@ -13,6 +13,7 @@ usage() {
   cat <<EOF
 Usage:
   bash render-quant-tests.sh --quant NAME
+  bash render-quant-tests.sh --quant NAME --ref-image IMAGE [--ref-image IMAGE ...]
   bash render-quant-tests.sh --all
   bash render-quant-tests.sh --list
 
@@ -20,6 +21,7 @@ Available quant tests:
   fl2va-pruned-q4  MiniMax-H3 first/last-frame pruned Q4_K_M (verified)
   ref2va-pruned-q6 MiniMax-H3 reference-to-video pruned Q6_K
   fl2va-q8         MiniMax-H3 first/last-frame pruned Q8_0 from Unsloth
+  ref2va-q8        MiniMax-H3 reference-to-video pruned Q8_0 from Unsloth
 EOF
 }
 
@@ -27,6 +29,7 @@ QUANT=""
 RUN_ALL=0
 LIST_ONLY=0
 CHECK_ONLY=0
+REFERENCE_IMAGES=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -38,6 +41,12 @@ while [[ $# -gt 0 ]]; do
     --all) RUN_ALL=1; shift ;;
     --list) LIST_ONLY=1; shift ;;
     --check-only) CHECK_ONLY=1; shift ;;
+    --ref-image)
+      reference_image="${2:-}"
+      [ -n "$reference_image" ] || { echo "ERROR: --ref-image requires a file path." >&2; exit 1; }
+      REFERENCE_IMAGES+=("$reference_image")
+      shift 2
+      ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -87,6 +96,12 @@ run_quant() {
       render_repo="unsloth/MiniMax-H3-GGUF"
       auxiliary_repo="unsloth/MiniMax-H3-GGUF"
       ;;
+    ref2va-q8)
+      diffusion_file="minimax_h3_ref2va_pruned-Q8_0.gguf"
+      text_encoder_file="qwen3vl_32b_minimax_h3-Q4_K_M.gguf"
+      render_repo="unsloth/MiniMax-H3-GGUF"
+      auxiliary_repo="unsloth/MiniMax-H3-GGUF"
+      ;;
     *)
       echo "ERROR: Unknown quant test '${quant}'." >&2
       usage >&2
@@ -97,6 +112,9 @@ run_quant() {
   if [ "$CHECK_ONLY" -eq 1 ]; then
     render_args+=(--check-only)
   fi
+  for reference_image in "${REFERENCE_IMAGES[@]}"; do
+    render_args+=(--ref-image "$reference_image")
+  done
 
   echo "=== Running quant test: ${quant} ==="
   output_dir="${MMH3_RENDER_OUTPUT_DIR:-${HOME}/videos/minimax-h3/${quant}}"
