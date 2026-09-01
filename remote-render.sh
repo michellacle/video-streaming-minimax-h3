@@ -50,7 +50,11 @@ start_job() {
   local job_id="render-$(date -u +%Y%m%d-%H%M%S)-$$"
   local argument_data
   local environment_data
-  argument_data="$(printf '%s\0' "$@" | base64 -w 0)"
+  if [ "$#" -eq 0 ]; then
+    argument_data="-"
+  else
+    argument_data="$(printf '%s\0' "$@" | base64 -w 0)"
+  fi
   environment_data="$(printf '%s\0' "${ENVIRONMENT_ASSIGNMENTS[@]}" | base64 -w 0)"
 
   tailscale ssh "$REMOTE_HOST" bash -s -- \
@@ -118,7 +122,11 @@ else
   exit 1
 fi
 
-printf '%s' "$argument_data" | base64 -d > "$job_dir/arguments.bin"
+if [ "$argument_data" = "-" ]; then
+  : > "$job_dir/arguments.bin"
+else
+  printf '%s' "$argument_data" | base64 -d > "$job_dir/arguments.bin"
+fi
 printf '%s' "$environment_data" | base64 -d > "$job_dir/environment.bin"
 cat > "$job_dir/runner.sh" <<'RUNNER'
 #!/usr/bin/env bash
