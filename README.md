@@ -254,6 +254,10 @@ both `setsid` and `nohup`, with redirected standard input/output, so a local
 terminal close or SSH/Tailscale disconnect does not stop the remote renderer.
 Each job records a persistent PID, status, timestamps, and log under
 `~/videos/minimax-h3/remote-jobs/`.
+Automatic GPU selection is paired with a conservative two-render admission
+limit, because Q8 CPU/RAM layer streaming can exhaust host RAM before GPU VRAM
+does. The launcher refuses a third job; only raise
+`MMH3_REMOTE_MAX_CONCURRENT_JOBS` after validating host-memory capacity.
 
 ```bash
 # Start a job on an available GPU; retain the returned job ID and GPU index.

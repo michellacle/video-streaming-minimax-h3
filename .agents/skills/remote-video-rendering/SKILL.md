@@ -58,6 +58,13 @@ use a single 15-second segment only after the user explicitly requests it.
    stores the GPU index, status, `render.log`, and PID under
    `~/videos/minimax-h3/remote-jobs/<job-id>/`. SSH/Tailscale disconnects do
    not terminate that process.
+
+   The default admission limit is two simultaneous render jobs. This is
+   intentional: Q8 layer streaming uses substantial shared host RAM as well as
+   VRAM; three concurrent jobs triggered the Linux OOM killer on the 125 GiB
+   host. The launcher refuses a third job before it can destabilize existing
+   renders. Raise `MMH3_REMOTE_MAX_CONCURRENT_JOBS` only after a measured
+   capacity test.
 4. Preserve the returned job ID. Reconnect safely with:
 
    ```bash

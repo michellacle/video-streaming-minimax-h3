@@ -7,6 +7,7 @@ REMOTE_HOST="${MMH3_REMOTE_HOST:-michel@gpus}"
 REMOTE_REPO_DIR="${MMH3_REMOTE_REPO_DIR:-/home/michel/code/video-streaming-minimax-h3}"
 REMOTE_JOB_ROOT="${MMH3_REMOTE_JOB_ROOT:-/home/michel/videos/minimax-h3/remote-jobs}"
 REMOTE_MAX_USED_VRAM_MIB="${MMH3_REMOTE_MAX_USED_VRAM_MIB:-512}"
+REMOTE_MAX_CONCURRENT_JOBS="${MMH3_REMOTE_MAX_CONCURRENT_JOBS:-2}"
 
 usage() {
   cat <<'USAGE'
@@ -21,6 +22,8 @@ Environment:
   MMH3_REMOTE_JOB_ROOT  Persistent remote job directory
   MMH3_REMOTE_MAX_USED_VRAM_MIB
                          Maximum used VRAM for automatic GPU selection
+  MMH3_REMOTE_MAX_CONCURRENT_JOBS
+                         Maximum simultaneous remote renders (default: 2)
 
 Jobs run under both setsid and nohup. They continue when the local SSH client
 disconnects. The default --gpu auto selects and reserves an idle GPU. Use
@@ -59,7 +62,7 @@ start_job() {
 
   tailscale ssh "$REMOTE_HOST" bash -s -- \
     "$REMOTE_REPO_DIR" "$REMOTE_JOB_ROOT" "$job_id" "$local_script" "$argument_data" "$environment_data" \
-    "$REQUESTED_GPU" "$REMOTE_MAX_USED_VRAM_MIB" <<'REMOTE'
+    "$REQUESTED_GPU" "$REMOTE_MAX_USED_VRAM_MIB" "$REMOTE_MAX_CONCURRENT_JOBS" <<'REMOTE'
 set -euo pipefail
 
 repo_dir="$1"
@@ -70,6 +73,7 @@ argument_data="$5"
 environment_data="$6"
 requested_gpu="$7"
 max_used_vram_mib="$8"
+max_concurrent_jobs="$9"
 remote_script="${repo_dir}/${script_relative_path}"
 job_dir="${job_root}/${job_id}"
 
@@ -81,6 +85,26 @@ job_dir="${job_root}/${job_id}"
 mkdir -p "$job_dir"
 exec 9>"${job_root}/dispatcher.lock"
 flock -x 9
+
+[[ "$max_concurrent_jobs" =~ ^[1-9][0-9]*$ ]] || {
+  echo "ERROR: MMH3_REMOTE_MAX_CONCURRENT_JOBS must be a positive integer." >&2
+  exit 1
+}
+
+active_jobs=0
+for status_file in "$job_root"/*/status; do
+  [ -f "$status_file" ] || continue
+  state="$(awk -F= '$1 == "state" { print $2 }' "$status_file")"
+  pid="$(awk -F= '$1 == "pid" { print $2 }' "$status_file")"
+  if { [ "$state" = "starting" ] || [ "$state" = "running" ]; } && \
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    active_jobs=$((active_jobs + 1))
+  fi
+done
+[ "$active_jobs" -lt "$max_concurrent_jobs" ] || {
+  echo "ERROR: ${active_jobs} render jobs are active; the safe limit is ${max_concurrent_jobs}. Retry after a job completes or explicitly raise MMH3_REMOTE_MAX_CONCURRENT_JOBS if host-memory capacity has been validated." >&2
+  exit 1
+}
 
 select_gpu() {
   local candidate_index candidate_used
