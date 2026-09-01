@@ -70,12 +70,17 @@ use a single 15-second segment only after the user explicitly requests it.
    ```bash
    bash remote-render.sh status <job-id>
    bash remote-render.sh logs <job-id>
+   bash remote-render.sh stop <job-id>
    ```
 
 Do not use a foreground `tailscale ssh ... bash create-...` command for a
 long render. Do not enable multi-GPU layer splitting: it is known to produce
 illegal CUDA memory access with this MiniMax-H3 build. GPU 0 is the supported
 single-GPU renderer; CPU/RAM layer streaming is intentional.
+
+Use `stop` rather than killing a launcher PID manually. It sends `SIGTERM` to
+the tracked runner, which forwards it to the exact `sd-cli` child and records a
+`cancelled` job state before releasing the GPU reservation.
 
 ## Verify and deliver
 

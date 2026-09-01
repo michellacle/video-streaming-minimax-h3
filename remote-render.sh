@@ -15,6 +15,7 @@ Usage:
   bash remote-render.sh start [--gpu auto|GPU_INDEX] [--env NAME=VALUE ...] SCRIPT [SCRIPT_ARGUMENT ...]
   bash remote-render.sh status JOB_ID
   bash remote-render.sh logs JOB_ID
+  bash remote-render.sh stop JOB_ID
 
 Environment:
   MMH3_REMOTE_HOST      Tailscale SSH host (default: michel@gpus)
@@ -173,6 +174,16 @@ printf 'state=running\npid=%s\ngpu=%s\nstarted_at=%s\n' "$$" "$assigned_gpu" "$s
 printf '%s\n' "$assigned_gpu" > "$job_dir/gpu-assigned"
 export CUDA_VISIBLE_DEVICES="$assigned_gpu"
 
+renderer_pid=""
+cancelled=0
+terminate_renderer() {
+  cancelled=1
+  if [ -n "$renderer_pid" ] && kill -0 "$renderer_pid" 2>/dev/null; then
+    kill -TERM "$renderer_pid"
+  fi
+}
+trap terminate_renderer TERM INT
+
 set +e
 mapfile -d '' -t environment_assignments < "$job_dir/environment.bin"
 for assignment in "${environment_assignments[@]}"; do
@@ -187,18 +198,24 @@ for assignment in "${environment_assignments[@]}"; do
   export "$assignment"
 done
 
-bash "$render_script" "$@" > "$job_dir/render.log" 2>&1
+bash "$render_script" "$@" > "$job_dir/render.log" 2>&1 &
+renderer_pid="$!"
+printf 'state=running\npid=%s\nrenderer_pid=%s\ngpu=%s\nstarted_at=%s\n' \
+  "$$" "$renderer_pid" "$assigned_gpu" "$started_at" > "$job_dir/status"
+wait "$renderer_pid"
 exit_code="$?"
 set -e
 
 finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-if [ "$exit_code" -eq 0 ]; then
+if [ "$cancelled" -eq 1 ]; then
+  state="cancelled"
+elif [ "$exit_code" -eq 0 ]; then
   state="completed"
 else
   state="failed"
 fi
-printf 'state=%s\npid=%s\ngpu=%s\nstarted_at=%s\nfinished_at=%s\nexit_code=%s\n' \
-  "$state" "$$" "$assigned_gpu" "$started_at" "$finished_at" "$exit_code" > "$job_dir/status"
+printf 'state=%s\npid=%s\nrenderer_pid=%s\ngpu=%s\nstarted_at=%s\nfinished_at=%s\nexit_code=%s\n' \
+  "$state" "$$" "$renderer_pid" "$assigned_gpu" "$started_at" "$finished_at" "$exit_code" > "$job_dir/status"
 exit "$exit_code"
 RUNNER
 chmod 700 "$job_dir/runner.sh"
@@ -270,6 +287,34 @@ tail -n 100 "$job_dir/render.log"
 REMOTE
 }
 
+stop_job() {
+  local job_id="$1"
+  local job_dir
+  job_dir="$(remote_job_dir "$job_id")"
+
+  tailscale ssh "$REMOTE_HOST" bash -s -- "$job_dir" <<'REMOTE'
+set -euo pipefail
+
+job_dir="$1"
+[ -f "$job_dir/status" ] || {
+  echo "ERROR: Unknown job: $job_dir" >&2
+  exit 1
+}
+state="$(awk -F= '$1 == "state" { print $2 }' "$job_dir/status")"
+pid="$(awk -F= '$1 == "pid" { print $2 }' "$job_dir/status")"
+case "$state" in
+  starting|running)
+    kill -TERM "$pid"
+    printf 'stop_requested_for_pid=%s\n' "$pid"
+    ;;
+  *)
+    echo "ERROR: Job is not active (state=${state})." >&2
+    exit 1
+    ;;
+esac
+REMOTE
+}
+
 [ "$#" -ge 1 ] || {
   usage >&2
   exit 1
@@ -321,6 +366,13 @@ case "$1" in
       exit 1
     }
     show_logs "$2"
+    ;;
+  stop)
+    [ "$#" -eq 2 ] || {
+      usage >&2
+      exit 1
+    }
+    stop_job "$2"
     ;;
   -h|--help|help)
     usage

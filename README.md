@@ -275,6 +275,7 @@ bash remote-render.sh start \
 # Safely reconnect to inspect it.
 bash remote-render.sh status render-YYYYMMDD-HHMMSS-PID
 bash remote-render.sh logs render-YYYYMMDD-HHMMSS-PID
+bash remote-render.sh stop render-YYYYMMDD-HHMMSS-PID  # safely cancels its renderer
 ```
 
 `create-stick-fighter-video-q8.sh` is the quality-development entrypoint. Its
